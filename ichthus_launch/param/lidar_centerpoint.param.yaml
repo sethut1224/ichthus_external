@@ -1,0 +1,12 @@
+/**:
+  ros__parameters:
+    score_threshold: 0.45
+    densification_world_frame_id: "map"
+    densification_num_past_frames: 1
+    trt_precision: "fp16"
+    encoder_onnx_path: '/autoware/install/lidar_centerpoint/share/lidar_centerpoint/data/pts_voxel_encoder_default.onnx'
+    encoder_engine_path: '/autoware/install/lidar_centerpoint/share/lidar_centerpoint/data/pts_voxel_encoder_default.engine'
+    head_onnx_path: '/autoware/install/lidar_centerpoint/share/lidar_centerpoint/data/pts_backbone_neck_head_default.onnx'
+    head_engine_path: '/autoware/install/lidar_centerpoint/share/lidar_centerpoint/data/pts_backbone_neck_head_default.engine'
+    class_names: ["CAR", "PEDESTRIAN", "BICYCLE"]
+    rename_car_to_truck_and_bus: true

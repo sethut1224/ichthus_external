@@ -1,0 +1,5 @@
+/**:
+  ros__parameters:
+    engine_file : "/autoware/install/lidar_apollo_instance_segmentation/share/lidar_apollo_instance_segmentation/data/vlp-16.engine"
+    prototxt_file : "/autoware/install/lidar_apollo_instance_segmentation/share/lidar_apollo_instance_segmentation/data/vlp-16.prototxt"
+    caffemodel_file : "/autoware/install/lidar_apollo_instance_segmentation/share/lidar_apollo_instance_segmentation/data/vlp-16.caffemodel"
