@@ -1,14 +1,14 @@
 <launch>
-    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_lgsvl.launch.py">
+    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_lgsvl_taeho.launch.py">
     </include>
 
-    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_map.launch.py">
+    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_map_taeho.launch.py">
     </include>
 
-    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_system.launch.py">
+    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_system_taeho.launch.py">
     </include>
 
-    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_sensing.launch.py">
+    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_sensing_taeho.launch.py">
     </include>
 
     <arg name ="lidar_channel" default="64"/>
@@ -17,10 +17,10 @@
 
     <arg name="lidar_apollo_instance_segmentation_param_path" default="$(find-pkg-share ichthus_launch)/param/lidar_apollo_instance_segmentation_$(var base_name).param.yaml"/>
 
-    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_perception.launch.py">
+    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_perception_taeho.launch.py">
       <arg name='lidar_apollo_instance_segmentation_param_path' value="$(var lidar_apollo_instance_segmentation_param_path)" />
     </include>
 
-    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_planning.launch.py">
+    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_planning_taeho.launch.py">
     </include>
 </launch>
