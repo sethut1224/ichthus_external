@@ -1,26 +1,35 @@
 <launch>
-    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_lgsvl_taeho.launch.py">
+
+    <arg name="lgsvl" default="true"/>
+    <arg name="map" default="true"/>
+    <arg name="system" default="true"/>
+    <arg name="sensing" default="true"/>
+    <arg name="perception" default="true"/>
+    <arg name="planning" default="true"/>
+
+
+    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_lgsvl_taeho.launch.py" if='$(var lgsvl)'>
     </include>
 
-    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_map_taeho.launch.py">
+    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_map_taeho.launch.py" if='$(var map)'>
     </include>
 
-    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_system_taeho.launch.py">
+    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_system_taeho.launch.py" if='$(var system)'>
     </include>
 
-    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_sensing_taeho.launch.py">
+    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_sensing_taeho.launch.py" if='$(var sensing)'>
     </include>
 
-    <arg name ="lidar_channel" default="64"/>
+    <arg name ="lidar_channel" default="16"/>
     <arg if="$(eval &quot; '$(var lidar_channel)' =='16'&quot;)" name="base_name" default="vlp-16"/>
     <arg if="$(eval &quot; '$(var lidar_channel)' =='64'&quot;)" name="base_name" default="hdl-64"/>
 
-    <arg name="lidar_apollo_instance_segmentation_param_path" default="$(find-pkg-share ichthus_launch)/param/lidar_apollo_instance_segmentation_$(var base_name).param.yaml"/>
-
-    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_perception_taeho.launch.py">
-      <arg name='lidar_apollo_instance_segmentation_param_path' value="$(var lidar_apollo_instance_segmentation_param_path)" />
+    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_perception_taeho.launch.py" if='$(var perception)'>
+      <arg name='lidar_apollo_instance_segmentation_param_path' value="$(find-pkg-share ichthus_launch)/param/lidar_apollo_instance_segmentation_$(var base_name).param.yaml" />
+      <arg name='yolo_type' value='yolov5m' />
+      <arg name='mode' value='INT8' />
     </include>
 
-    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_planning_taeho.launch.py">
+    <include file="$(find-pkg-share ichthus_launch)/launch/taeho/ichthus_planning_taeho.launch.py" if='$(var planning)'>
     </include>
 </launch>

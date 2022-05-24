@@ -32,6 +32,23 @@ class Perception:
         self.apollo_output_topic= '/lidar_front/apollo/clusters'
         self.centerpoint_output_topic = '/lidar_front/centerpoint/objects'
 
+        self.compressed = LaunchConfiguration('compressed').perform(self.context)
+        self.raw = not self.compressed
+        self.tensorrt_yolo_param_path = os.path.join(
+            get_package_share_directory('ichthus_launch'), 'param/tensorrt_yolo/',LaunchConfiguration('yolo_type').perform(self.context)+'.param.yaml'
+        )
+        self.tensorrt_yolo_onnx_file = os.path.join(
+            get_package_share_directory('tensorrt_yolo'), 'data/',LaunchConfiguration('yolo_type').perform(self.context)+'.onnx')
+        self.tensorrt_yolo_engine_file = os.path.join(
+            get_package_share_directory('tensorrt_yolo'), 'data/',LaunchConfiguration('yolo_type').perform(self.context)+'.engine')
+        self.tensorrt_yolo_label_file = os.path.join(
+            get_package_share_directory('tensorrt_yolo'), 'data/','coco.names')
+        self.tensorrt_yolo_calib_image_directory = os.path.join(
+            get_package_share_directory('tensorrt_yolo'), 'calib_image')
+        self.tensorrt_yolo_calib_cache_file = os.path.join(
+            get_package_share_directory('tensorrt_yolo'), 'data/',LaunchConfiguration('yolo_type').perform(self.context)+'.cache')
+
+
     def get_vehicle_info(self):
         path = LaunchConfiguration('vehicle_info_param_path').perform(self.context)
         with open(path, 'r') as f:
@@ -46,7 +63,53 @@ class Perception:
             p["max_height_offset"] = p["vehicle_height"] 
         return p
         
-    # def camera(self, input_topic, output_topic):
+    def camera(self, compressed_image_topic, raw_image_topic, output_objects_topic):
+        image_transport_decompressor = Node(
+            package='image_transport_decompressor',
+            executable='image_transport_decompressor_node',
+            name='image_decompressor',
+            parameters=[
+                {"encoding": "rgb8"}
+            ],
+            remappings=[
+                ('~/input/compressed_image', compressed_image_topic),
+                ('~/output/raw_image', raw_image_topic)
+            ],
+            condition=IfCondition(LaunchConfiguration('compressed'))
+        )
+
+        tensorrt_yolo = Node(
+            package='tensorrt_yolo',
+            executable='tensorrt_yolo_node',
+            name='tensorrt_yolo',
+            parameters=[
+                self.tensorrt_yolo_param_path,
+                {
+                    'onnx_file' : self.tensorrt_yolo_onnx_file,
+                    'engine_file' : self.tensorrt_yolo_engine_file,
+                    'label_file' : self.tensorrt_yolo_label_file,
+                    'calib_image_directory' : self.tensorrt_yolo_calib_image_directory,
+                    'calib_cache_file' : self.tensorrt_yolo_calib_cache_file,
+                    'mode' : LaunchConfiguration('mode')
+                }
+            ],
+            remappings=[
+                ('in/image', raw_image_topic),
+                ('/out/objects', output_objects_topic)
+            ],
+        )
+
+        detected_object_feature_remover = Node(
+            package='detected_object_feature_remover',
+            executable='detected_object_feature_remover',
+            name='detected_object_feature_remover',
+            remappings=[
+                ('~/input', '/camera/detected_objects'),
+                ('~/output', '/camera/objects')
+            ]
+        )
+
+        return [image_transport_decompressor, tensorrt_yolo]
 
     def lidar_detection(self, range_cropped_pointcloud, obstacle_segmentation_pointcloud, output_topic):
 
@@ -68,13 +131,13 @@ class Perception:
             condition = IfCondition(LaunchConfiguration('use_centerpoint'))
         )
         
-        lidar_apollo_instance_segmentation_param_path = LaunchConfiguration('lidar_apollo_instance_segmentation_param_path').perform(self.context)
+        # lidar_apollo_instance_segmentation_param_path = LaunchConfiguration('lidar_apollo_instance_segmentation_param_path').perform(self.context)
 
-        with open(lidar_apollo_instance_segmentation_param_path, "r") as f:
-            lidar_apollo_instance_segmentation_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+        # with open(lidar_apollo_instance_segmentation_param_path, "r") as f:
+        #     lidar_apollo_instance_segmentation_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
-        with open(self.apollo_lidar_model_param, 'r') as f:
-            apollo_lidar_model_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+        # with open(self.apollo_lidar_model_param, 'r') as f:
+        #     apollo_lidar_model_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
         # lidar_apollo_instance_segmentation = Node(
         #     package='lidar_apollo_instance_segmentation',
@@ -257,17 +320,21 @@ def launch_setup(context, *args, **kwargs):
     no_ground_pointcloud = LaunchConfiguration('no_ground_pointcloud_topic').perform(context)
     grid_map = LaunchConfiguration('grid_map_topic').perform(context)
     obstacle_segmentation_pointcloud = LaunchConfiguration('obstacle_segmentation_pointcloud_topic').perform(context)
-    detected_objects_topic = LaunchConfiguration('detected_objects_topic')
-    tracked_objects_topic = LaunchConfiguration('tracked_objects_topic')
-    predicted_object_topic = LaunchConfiguration('predicted_objects_topic')
+    lidar_detected_objects_topic = LaunchConfiguration('lidar_detected_objects_topic').perform(context)
+    tracked_objects_topic = LaunchConfiguration('tracked_objects_topic').perform(context)
+    predicted_object_topic = LaunchConfiguration('predicted_objects_topic').perform(context)
+    compressed_image_topic = LaunchConfiguration('compressed_image_topic').perform(context)
+    raw_image_topic = LaunchConfiguration('raw_image_topic').perform(context)
+    camera_detected_objects_topic = LaunchConfiguration('camera_detected_objects_topic').perform(context)
 
-    lidar_detection_nodes = pipeline.lidar_detection(range_cropped_pointcloud, obstacle_segmentation_pointcloud, detected_objects_topic)
-    lidar_tracking_nodes = pipeline.lidar_tracking(detected_objects_topic, tracked_objects_topic)
+    lidar_detection_nodes = pipeline.lidar_detection(range_cropped_pointcloud, obstacle_segmentation_pointcloud, lidar_detected_objects_topic)
+    lidar_tracking_nodes = pipeline.lidar_tracking(lidar_detected_objects_topic, tracked_objects_topic)
     lidar_prediction_nodes = pipeline.lidar_prediction(tracked_objects_topic, predicted_object_topic)
-
+    camera_nodes = pipeline.camera(compressed_image_topic, raw_image_topic, camera_detected_objects_topic)
     nodes.extend(lidar_detection_nodes)
     nodes.extend(lidar_tracking_nodes)
     nodes.extend(lidar_prediction_nodes)
+    nodes.extend(camera_nodes)
 
     return nodes
 
@@ -304,9 +371,18 @@ def generate_launch_description():
 
     add_launch_arg('range_cropped_pointcloud_topic', '/lidar_front/range_cropped_pointcloud')
     add_launch_arg('obstacle_segmentation_pointcloud_topic', '/perception/obstacle_segmentation/pointcloud')
-    add_launch_arg('detected_objects_topic', '/lidar_front/detected_objects')
+    add_launch_arg('lidar_detected_objects_topic', '/lidar_front/detected_objects')
     add_launch_arg('tracked_objects_topic', '/perception/object_recognition/tracking/objects')
     add_launch_arg('predicted_objects_topic', '/perception/object_recognition/objects')
+    add_launch_arg('no_ground_pointcloud_topic', '/lidar_front/no_ground_pointcloud')
+    add_launch_arg('grid_map_topic', '/perception/occupancy_grid_map/map')
+
+    add_launch_arg('compressed_image_topic', '/image/compressed')
+    add_launch_arg('raw_image_topic', '/image_raw')
+    add_launch_arg('compressed', 'true')
+    add_launch_arg('camera_detected_objects_topic', '/camera/detected_objects')
+    add_launch_arg('yolo_type', 'yolov5m')
+    add_launch_arg('mode', 'INT8')
 
     add_launch_arg('vehicle_info_param_path', vehicle_info_param_path_default),
     add_launch_arg('lidar_channel', "16")
@@ -318,6 +394,7 @@ def generate_launch_description():
     add_launch_arg('tracker_setting_param_path', tracker_setting_param_path_default)
     add_launch_arg('data_association_matrix_param_path', data_association_matrix_param_path_default)
     add_launch_arg('map_based_prediction_param_path', map_based_prediction_param_path_default)
+    
 
     return launch.LaunchDescription(
         launch_arguments 
