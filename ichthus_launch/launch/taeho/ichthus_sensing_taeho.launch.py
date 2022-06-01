@@ -54,7 +54,8 @@ class Sensing:
                     'min_y' : -60.0,
                     'max_y' : 60.0,
                     "min_z": -0.5,
-                    "max_z": self.vehicle_info['max_height_offset']
+                    "max_z": self.vehicle_info['max_height_offset'],
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
                 }
             ],
         )
@@ -74,6 +75,7 @@ class Sensing:
                     "local_slope_max_angle_deg": 6.0,
                     "split_points_distance_tolerance": 0.2,
                     "split_height_distance": 0.2,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
                 },
                 self.vehicle_info
             ],
@@ -97,6 +99,7 @@ class Sensing:
                 {
                     "map_resolution": 0.5,
                     "use_height_filter": False,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
                 }
             ],
             output='screen'
@@ -111,6 +114,11 @@ class Sensing:
                 ("~/input/pointcloud", no_ground_pointcloud),
                 ("~/output/pointcloud", obstacle_segmentation_pointcloud),
             ],
+            parameters=[
+                {
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                }
+            ]
         )
 
         return [occupancy_grid_map, occupancy_grid_map_outlier_filter]
@@ -151,6 +159,7 @@ def generate_launch_description():
     add_launch_arg('grid_map_topic', '/perception/occupancy_grid_map/map')
     add_launch_arg('obstacle_segmentation_pointcloud_topic', '/perception/obstacle_segmentation/pointcloud')
     add_launch_arg('vehicle_info_param_path', vehicle_info_param_path_default),
+    add_launch_arg('use_sim_time', 'False')
 
     return launch.LaunchDescription(
         launch_arguments 

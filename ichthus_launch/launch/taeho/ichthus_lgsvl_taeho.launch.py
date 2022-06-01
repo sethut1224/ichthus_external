@@ -45,7 +45,10 @@ class LGSVL:
             executable='robot_state_publisher',
             name='urdf_publisher',
             parameters=[
-                {'robot_description': urdf_file}
+                {
+                    'robot_description': urdf_file,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                }
             ],
         )
 
@@ -61,7 +64,8 @@ class LGSVL:
             parameters=[
               lgsv_interface_param,
               {"lgsvl.publish_tf": True},
-              {"lgsvl.publish_pose": False}
+              {"lgsvl.publish_pose": False},
+              {'use_sim_time' : LaunchConfiguration('use_sim_time')}
             ],
             remappings=[
                 ("vehicle_control_cmd", "/lgsvl/vehicle_control_cmd"),
@@ -106,6 +110,7 @@ def generate_launch_description():
     add_launch_arg('vehicle_info_param_path', vehicle_info_param_path_default)
     add_launch_arg('lgsvl_interface_param_path', lgsvl_interface_param_path_default)
     add_launch_arg('urdf_path', urdf_path_default)
+    add_launch_arg('use_sim_time', 'False')
 
     return launch.LaunchDescription(
         launch_arguments 

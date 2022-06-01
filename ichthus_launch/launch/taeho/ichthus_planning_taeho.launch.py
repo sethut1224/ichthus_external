@@ -87,6 +87,7 @@ class Planning:
                 {
                     "map_frame": "map",
                     "base_link_frame": "base_link",
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
                 }
             ],
         )
@@ -99,6 +100,11 @@ class Planning:
                 ("input/route", "/planning/mission_planning/route"),
                 ("output/goal_pose", "/planning/mission_planning/echo_back_goal_pose"),
             ],
+            parameters=[
+                {
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                }
+            ]
         )
 
         return [mission_planner, goal_pose_visualizer]
@@ -173,7 +179,8 @@ class Planning:
                     "planning_hz" : 20.0,
                     'backward_path_length' : 1.0,
                     'drivable_lane_backward_length':  1.0,
-                    'drivable_lane_margin': 3.0
+                    'drivable_lane_margin': 3.0,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
                 }
             ],
         )
@@ -200,6 +207,7 @@ class Planning:
                     'th_arrived_distance_m' : 1.0,
                     'th_stopped_time_sec' : 1.0,
                     'th_stopped_velocity_mps' : 0.01,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
                 }
             ]
         )
@@ -271,7 +279,8 @@ class Planning:
                     "forward_path_length": 1000.0,
                     "backward_path_length": 1.0,
                     "max_accel": -2.8,
-                    "delay_response_time": 0.5
+                    "delay_response_time": 0.5,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
                 },
                 blind_spot_param,
                 crosswalk_param,
@@ -319,6 +328,7 @@ class Planning:
                 self.vehicle_info,
                 {"is_showing_debug_info": True},
                 {"is_stopping_if_outside_drivable_area": True},
+                {'use_sim_time' : LaunchConfiguration('use_sim_time')}
             ],
         )
 
@@ -350,6 +360,7 @@ class Planning:
                 adaptive_curise_control_param,
                 self.vehicle_info,
                 {"enable_slow_down": False},
+                {'use_sim_time' : LaunchConfiguration('use_sim_time')}
             ],
         )
 
@@ -366,7 +377,8 @@ class Planning:
             parameters=[
                 {
                     'param_path' : motion_velocity_smoother_param,
-                    'common_param_path' : common_param
+                    'common_param_path' : common_param,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
                 }
             ]
         )
@@ -390,6 +402,7 @@ class Planning:
                     'param_path' : motion_velocity_smoother_param,
                     'common_param_path' : common_param,
                     'smoother_param_path' : smoother_param,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
                 }
             ]
         )
@@ -458,6 +471,8 @@ def generate_launch_description():
     add_launch_arg('motion_velocity_smoother_param_path', motion_velocity_smoother_param_path_default)
     add_launch_arg('smoother_param_directory_path', smoother_param_directory_path_default)
     add_launch_arg('smoother_type', 'JerkFiltered')
+
+    add_launch_arg('use_sim_time', 'False')
 
     return launch.LaunchDescription(
         launch_arguments

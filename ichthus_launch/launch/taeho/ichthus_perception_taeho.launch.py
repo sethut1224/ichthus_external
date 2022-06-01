@@ -48,6 +48,18 @@ class Perception:
         self.tensorrt_yolo_calib_cache_file = os.path.join(
             get_package_share_directory('tensorrt_yolo'), 'data/',LaunchConfiguration('yolo_type').perform(self.context)+'.cache')
 
+        self.lidar_centerpoint_model_name = LaunchConfiguration('model_name').perform(self.context)
+        self.lidar_centerpoint_model_path = os.path.join(
+            get_package_share_directory('lidar_centerpoint'), 'data'
+        )
+        self.lidar_centerpoint_model_param_path = os.path.join(
+            get_package_share_directory('ichthus_launch') , 'param', self.lidar_centerpoint_model_name+'.param.yaml'
+        )
+        self.lidar_centerpoint_encoder_onnx_path = self.lidar_centerpoint_model_path + '/pts_voxel_encoder_'+self.lidar_centerpoint_model_name+'.onnx'
+        self.lidar_centerpoint_encode_engine_path = self.lidar_centerpoint_model_path + '/pts_voxel_encoder_'+self.lidar_centerpoint_model_name+'.engine'
+        self.lidar_centerpoint_head_onnx_path = self.lidar_centerpoint_model_path + '/pts_backbone_neck_head_'+self.lidar_centerpoint_model_name+'.onnx'
+        self.lidar_centerpoint_head_engine_path = self.lidar_centerpoint_model_path + '/pts_backbone_neck_head_'+self.lidar_centerpoint_model_name+'.engine'
+
 
     def get_vehicle_info(self):
         path = LaunchConfiguration('vehicle_info_param_path').perform(self.context)
@@ -69,7 +81,8 @@ class Perception:
             executable='image_transport_decompressor_node',
             name='image_decompressor',
             parameters=[
-                {"encoding": "rgb8"}
+                {"encoding": "rgb8"},
+                {'use_sim_time' : LaunchConfiguration('use_sim_time')}
             ],
             remappings=[
                 ('~/input/compressed_image', compressed_image_topic),
@@ -90,7 +103,8 @@ class Perception:
                     'label_file' : self.tensorrt_yolo_label_file,
                     'calib_image_directory' : self.tensorrt_yolo_calib_image_directory,
                     'calib_cache_file' : self.tensorrt_yolo_calib_cache_file,
-                    'mode' : LaunchConfiguration('mode')
+                    'mode' : LaunchConfiguration('mode'),
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
                 }
             ],
             remappings=[
@@ -106,6 +120,11 @@ class Perception:
             remappings=[
                 ('~/input', '/camera/detected_objects'),
                 ('~/output', '/camera/objects')
+            ],
+            parameters=[
+                {
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                }
             ]
         )
 
@@ -126,11 +145,35 @@ class Perception:
                 ('~/output/objects', output_topic)
             ],
             parameters=[
-                lidar_centerpoint_param
+                lidar_centerpoint_param,
+                {
+                    'score_threshold' : 0.45,
+                    'densification_world_frame_id' : 'map',
+                    'densification_num_past_frames' : 1,
+                    'trt_precision' : 'fp16',
+                    'encoder_onnx_path' : self.lidar_centerpoint_encoder_onnx_path,
+                    'encoder_engine_path' : self.lidar_centerpoint_encode_engine_path,
+                    'head_onnx_path' : self.lidar_centerpoint_head_onnx_path,
+                    'head_engine_path' : self.lidar_centerpoint_head_engine_path,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                }
             ],
             condition = IfCondition(LaunchConfiguration('use_centerpoint'))
         )
         
+
+    #     <remap from="~/input/pointcloud" to="$(var input/pointcloud)"/>
+    # <remap from="~/output/objects" to="$(var output/objects)"/>
+    # <param name="score_threshold" value="0.45"/>
+    # <param name="densification_world_frame_id" value="map"/>
+    # <param name="densification_num_past_frames" value="1"/>
+    # <param name="trt_precision" value="fp16"/>
+    # <param name="encoder_onnx_path" value="$(var model_path)/pts_voxel_encoder_$(var model_name).onnx"/>
+    # <param name="encoder_engine_path" value="$(var model_path)/pts_voxel_encoder_$(var model_name).engine"/>
+    # <param name="head_onnx_path" value="$(var model_path)/pts_backbone_neck_head_$(var model_name).onnx"/>
+    # <param name="head_engine_path" value="$(var model_path)/pts_backbone_neck_head_$(var model_name).engine"/>
+    # <param from="$(var model_param_path)"/>
+
         # lidar_apollo_instance_segmentation_param_path = LaunchConfiguration('lidar_apollo_instance_segmentation_param_path').perform(self.context)
 
         # with open(lidar_apollo_instance_segmentation_param_path, "r") as f:
@@ -237,6 +280,7 @@ class Perception:
                 {
                     "map_resolution": 0.5,
                     "use_height_filter": False,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
                 }
             ],
             output='screen'
@@ -251,6 +295,11 @@ class Perception:
                 ("~/input/pointcloud", no_ground_pointcloud),
                 ("~/output/pointcloud", obstacle_segmentation_pointcloud),
             ],
+            parameters=[
+                {
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                }
+            ]
         )
 
         return [occupancy_grid_map, occupancy_grid_map_outlier_filter]
@@ -279,7 +328,8 @@ class Perception:
                 {
                     'world_frame_id' : 'map',
                     'publish_rate' : 10.0, #fix to 10.0 when enable_delay_compensation is False
-                    'enable_delay_compensation' : False
+                    'enable_delay_compensation' : False,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
                 },
                 tracker_setting_param,
                 data_association_matrix_param
@@ -305,7 +355,10 @@ class Perception:
                 ('objects', predicted_object_topic),
             ],
             parameters=[
-                map_based_prediction_param
+                map_based_prediction_param,
+                {
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                }
             ]
         )
 
@@ -388,6 +441,7 @@ def generate_launch_description():
     add_launch_arg('lidar_channel', "16")
     add_launch_arg('use_centerpoint', 'true')
     add_launch_arg('use_apollo', 'false')
+    add_launch_arg('model_name', 'default')
     add_launch_arg('lidar_centerpoint_param_path', lidar_centerpoint_param_path_default)
     add_launch_arg('lidar_apollo_instance_segmentation_param_path', lidar_apollo_instance_segmentation_param_path_default)
     
@@ -395,6 +449,7 @@ def generate_launch_description():
     add_launch_arg('data_association_matrix_param_path', data_association_matrix_param_path_default)
     add_launch_arg('map_based_prediction_param_path', map_based_prediction_param_path_default)
     
+    add_launch_arg('use_sim_time', 'False')
 
     return launch.LaunchDescription(
         launch_arguments 

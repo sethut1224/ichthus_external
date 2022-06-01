@@ -48,6 +48,7 @@ class Map:
                     "center_line_resolution": 5.0,
                     "lanelet2_map_path": self.lanelet2_map,
                     "lanelet2_map_projector_type": "UTM",  # Options: MGRS, UTM
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
                 },
                 lanelet2_map_loader_param
             ],
@@ -61,12 +62,22 @@ class Map:
                 ("input/lanelet2_map", "/map/vector_map"),
                 ("output/lanelet2_map_marker", "/map/vector_map_marker"),
             ],
+            parameters=[
+                {
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                }
+            ]
         )
 
         map_odom_publisher = Node(
             package='tf2_ros',
             executable='static_transform_publisher',
-            arguments=self.map_odom_tf_dict[LaunchConfiguration('lanelet2_map').perform(self.context)]
+            arguments=self.map_odom_tf_dict[LaunchConfiguration('lanelet2_map').perform(self.context)],
+            parameters=[
+                {
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                }
+            ]
         )
         ###only use when LGSVL Simulation without pointcloud map
         ###if Simulate only with lanelet2 map, fix the z value from the LGSVL 
@@ -108,7 +119,7 @@ def generate_launch_description():
     add_launch_arg('lanelet2_map', 'SanFrancisco.osm'),
     add_launch_arg('use_pointcloud_map', 'False')
     add_launch_arg('lanelet2_map_loader_param_path', lanelet2_map_loader_param_path_default)
-
+    add_launch_arg('use_sim_time', 'False')
     return launch.LaunchDescription(
         launch_arguments 
         + [OpaqueFunction(function=launch_setup)]

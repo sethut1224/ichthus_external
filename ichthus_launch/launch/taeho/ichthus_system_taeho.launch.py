@@ -33,6 +33,11 @@ class System:
             executable='rviz2',
             name='rviz2',
             arguments=['-d', self.rviz_config_path, '-s', self.rviz_splash_image_path],
+            parameters=[
+                {
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                }
+            ],
             condition = IfCondition(LaunchConfiguration('rviz'))
         )
 
@@ -44,7 +49,8 @@ class System:
             executable='robot_state_publisher',
             name='urdf_publisher',
             parameters=[
-                {'robot_description': urdf_file}
+                {'robot_description': urdf_file},
+                {'use_sim_time' : LaunchConfiguration('use_sim_time')}
             ],
             output='screen'
         )
@@ -76,6 +82,7 @@ def generate_launch_description():
     add_launch_arg('rviz_config_path', 'ichthus.rviz')
     add_launch_arg('urdf_file_path', urdf_file_path_default)
     add_launch_arg('rviz', 'true')
+    add_launch_arg('use_sim_time', 'False')
 
     return launch.LaunchDescription(
         launch_arguments
