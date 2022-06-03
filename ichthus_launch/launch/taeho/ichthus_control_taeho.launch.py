@@ -157,19 +157,26 @@ class Control:
                 },
             ],
         )
-        return [lat_controller, lon_controller, latlon_muxer, vehicle_cmd_gate]
 
-    # state_report = Node(
-    #     package='state_report',
-    #     executable='state_report_node',
-    #     name='state_report',
-    #     remappings=[
-    #         ('input/vehicle_kinematic_state', '/vehicle/vehicle_kinematic_state'),
-    #         ('input/turn_indicators_command', '/control/command/turn_indicators_cmd'),
-    #         ('output/vehicle_velocity_report', '/vehicle/status/velocity_status'),
-    #         ('output/turn_indicators_report', '/vehicle/status/turn_indicators_status'),
-    #         ('output/steering_report', '/vehicle/status/steering_status')
-    #     
+        state_report = Node(
+            package='state_report',
+            executable='state_report_node',
+            name='state_report',
+            remappings=[
+                ('input/vehicle_kinematic_state', '/vehicle/vehicle_kinematic_state'),
+                ('input/turn_indicators_command', '/control/command/turn_indicators_cmd'),
+                ('output/vehicle_velocity_report', '/vehicle/status/velocity_status'),
+                ('output/turn_indicators_report', '/vehicle/status/turn_indicators_status'),
+                ('output/steering_report', '/vehicle/status/steering_status')
+            ]
+            parameters=[
+                {
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                }
+            ]
+        )
+
+        return [lat_controller, lon_controller, latlon_muxer, vehicle_cmd_gate, state_report]
 
 def launch_setup(context, *args, **kwargs):
     pipeline = Control(context)

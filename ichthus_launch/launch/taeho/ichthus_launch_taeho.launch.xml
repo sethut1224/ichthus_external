@@ -6,7 +6,7 @@
     <arg name="sensing" default="true"/>
     <arg name="perception" default="true"/>
     <arg name="planning" default="true"/>
-    <arg name='control' default='false'/>
+    <arg name='control' default='true'/>
 
     <!-- <arg name='use_sim_time' default='false' /> -->
     <arg if="$(eval &quot; '$(var lgsvl)' =='true'&quot;)" name="use_sim_time" default="true"/>
