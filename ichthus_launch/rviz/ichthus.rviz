@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Map1/Lanelet2VectorMap1/Namespaces1
+        - /Sensing1/Lidar1/PointCloud21
         - /Sensing1/Lidar1/PointCloud21/Topic1
         - /Perception1/GridMap1
         - /Perception1/Camera1
@@ -295,7 +296,7 @@ Visualization Manager:
               Enabled: true
               Invert Rainbow: false
               Max Color: 255; 255; 255
-              Max Intensity: 149
+              Max Intensity: 255
               Min Color: 0; 0; 0
               Min Intensity: 0
               Name: PointCloud2
@@ -305,7 +306,7 @@ Visualization Manager:
               Size (m): 0.30000001192092896
               Style: Points
               Topic:
-                Depth: 5
+                Depth: 1
                 Durability Policy: Volatile
                 Filter size: 10
                 History Policy: Keep Last
@@ -553,12 +554,7 @@ Visualization Manager:
               Enabled: true
               Name: MarkerArray
               Namespaces:
-                end_lanelets: true
-                goal_lanelets: true
-                lane_start_bound: true
-                left_lane_bound: true
-                right_lane_bound: true
-                route_lanelets: true
+                {}
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
@@ -619,7 +615,7 @@ Visualization Manager:
                 Value: true
             - Class: rviz_plugins/Path
               Color Border Vel Max: 3
-              Enabled: true
+              Enabled: false
               Name: Path
               Topic:
                 Depth: 5
@@ -628,7 +624,7 @@ Visualization Manager:
                 History Policy: Keep Last
                 Reliability Policy: Reliable
                 Value: /planning/scenario_planning/lane_driving/behavior_planning/path
-              Value: true
+              Value: false
               View Path:
                 Alpha: 1
                 Color: 0; 0; 0
@@ -645,10 +641,7 @@ Visualization Manager:
               Enabled: true
               Name: MarkerArray
               Namespaces:
-                collision_polygons: true
                 detection_polygons: true
-                stop_obstacle_point: true
-                stop_obstacle_text: true
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
@@ -851,11 +844,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 9.841931343078613
+      Scale: 18.982776641845703
       Target Frame: base_link
       Value: TopDownOrtho (rviz_default_plugins)
-      X: -20.2507266998291
-      Y: 7.033542633056641
+      X: -15.177529335021973
+      Y: 1.2988361120224
     Saved:
       - Class: rviz_default_plugins/ThirdPersonFollower
         Distance: 18

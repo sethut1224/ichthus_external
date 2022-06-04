@@ -177,9 +177,13 @@ class Planning:
                 {
                     "bt_tree_config_path":  self.bt_tree_config_param_path,
                     "planning_hz" : 20.0,
-                    'backward_path_length' : 1.0,
-                    'drivable_lane_backward_length':  1.0,
-                    'drivable_lane_margin': 3.0,
+                    # 'backward_path_length' : 5.0,
+                    # 'drivable_lane_backward_length':  5.0,
+                    # 'drivable_lane_margin': 3.0,
+                    'lane_change.enable_collision_check_at_prepare_phase': True,
+                    'lane_change.lane_change_prepare_duration' : 3.0,
+                    'lane_change.use_predicted_path_outside_lanelet': False,
+                    'lane_change.use_all_predicted_path': False,
                     'use_sim_time' : LaunchConfiguration('use_sim_time')
                 }
             ],

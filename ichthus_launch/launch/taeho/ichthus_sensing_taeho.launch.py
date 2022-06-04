@@ -75,6 +75,7 @@ class Sensing:
                     "local_slope_max_angle_deg": 6.0,
                     "split_points_distance_tolerance": 0.2,
                     "split_height_distance": 0.2,
+                    'max_queue_size' : 1,
                     'use_sim_time' : LaunchConfiguration('use_sim_time')
                 },
                 self.vehicle_info
