@@ -54,9 +54,6 @@ class System:
             ],
             output='screen'
         )
-
-
-        # return [rviz2, path_change_approval_pub, engage_pub]
         return [rviz2, urdf_publisher]
 
 

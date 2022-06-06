@@ -20,6 +20,8 @@ class Sensing:
     def __init__(self, context):
         self.context = context
         self.vehicle_info = self.get_vehicle_info()
+        self.use_multi_lidar = LaunchConfiguration('use_multi_lidar').perform(self.context)
+        self.raw_pointcloud = '/lidar_front/points_raw' if self.use_multi_lidar == 'false' else 'concatenated/pointcloud'
 
     def get_vehicle_info(self):
         path = LaunchConfiguration('vehicle_info_param_path').perform(self.context)
@@ -36,13 +38,31 @@ class Sensing:
         return p
 
     def lidar_preprocess(self, raw_pointcloud, range_cropped_pointcloud, no_ground_pointcloud):
+        
+        concatenate_filter = Node(
+            package='pointcloud_preprocessor',
+            executable="concatenate_data_node",
+            name="concatenate_filter",
+            remappings=[
+                ("output", "concatenated/pointcloud")
+            ],
+            parameters=[
+                {
+                    "input_topics": ['/lidar_front/points_raw', '/lidar_rear/points_raw'],
+                    "output_frame": "base_link",
+                    "approximate_sync": True,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                }
+            ],
+            condition=IfCondition(LaunchConfiguration('use_multi_lidar'))
+        )
 
         crop_box_filter= Node(
             package='pointcloud_preprocessor',
             executable="crop_box_filter_node",
             name="crop_box_filter",
             remappings=[
-                ("input", raw_pointcloud),
+                ("input",  self.raw_pointcloud),
                 ('output', range_cropped_pointcloud)
             ],
             parameters=[
@@ -55,11 +75,36 @@ class Sensing:
                     'max_y' : 60.0,
                     "min_z": -0.5,
                     "max_z": self.vehicle_info['max_height_offset'],
+                    'max_queue_size' : 1,
                     'use_sim_time' : LaunchConfiguration('use_sim_time')
                 }
             ],
         )
 
+        voxel_grid_downsample_filter_param_path = LaunchConfiguration('voxel_grid_downsample_filter_param_path').perform(self.context)
+
+        with open(voxel_grid_downsample_filter_param_path, "r") as f:
+            voxel_grid_downsample_filter_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+        
+        voxel_grid_downsample_filter = Node(
+            package="pointcloud_preprocessor",
+            executable='voxel_grid_downsample_filter_node',
+            name="voxel_grid_downsample_filter",
+            remappings=[
+                ("input", self.raw_pointcloud),
+                ("output", "voxel_grid_downsample/pointcloud"),
+            ],
+
+            parameters=[
+                voxel_grid_downsample_filter_param,
+                {
+                    'voxel_size_x' : 2.0,
+                    'voxel_size_y' : 2.0,
+                    'voxel_size_z' : 2.0,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time'),
+                }
+            ],
+        )
 
         scan_ground_filter = Node(
             package="ground_segmentation",
@@ -82,7 +127,7 @@ class Sensing:
             ],
         )
 
-        return [crop_box_filter, scan_ground_filter]
+        return [concatenate_filter, crop_box_filter, voxel_grid_downsample_filter, scan_ground_filter]
         
 
     def occupancy_grid_map(self, no_ground_pointcloud, range_cropped_pointcloud, grid_map, obstacle_segmentation_pointcloud):
@@ -154,6 +199,10 @@ def generate_launch_description():
         get_package_share_directory('ichthus_launch'), 'param/vehicle_info.param.yaml'
     )
 
+    voxel_grid_downsample_filter_param_path_default = os.path.join(
+        get_package_share_directory('ichthus_launch'), 'param/voxel_grid_filter.param.yaml'
+    )
+
     add_launch_arg('raw_pointcloud_topic', '/lidar_front/points_raw'),
     add_launch_arg('no_ground_pointcloud_topic', '/lidar_front/no_ground_pointcloud'),
     add_launch_arg('range_cropped_pointcloud_topic', '/lidar_front/range_cropped_pointcloud')
@@ -161,7 +210,8 @@ def generate_launch_description():
     add_launch_arg('obstacle_segmentation_pointcloud_topic', '/perception/obstacle_segmentation/pointcloud')
     add_launch_arg('vehicle_info_param_path', vehicle_info_param_path_default),
     add_launch_arg('use_sim_time', 'False')
-
+    add_launch_arg('voxel_grid_downsample_filter_param_path', voxel_grid_downsample_filter_param_path_default)
+    add_launch_arg('use_multi_lidar', 'False')
     return launch.LaunchDescription(
         launch_arguments 
         + [OpaqueFunction(function=launch_setup)]

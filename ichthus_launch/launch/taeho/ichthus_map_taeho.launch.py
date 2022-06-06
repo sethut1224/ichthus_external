@@ -23,12 +23,37 @@ class Map:
         self.pointcloud_map = self.base_path + LaunchConfiguration('pointcloud_map').perform(self.context)
         
         self.map_odom_tf_dict = {
-            'SanFrancisco.osm' : ["0", "0", "10.578049659729004", "0", "0", "0", "map", "odom"]
+            'SanFrancisco.osm' : ["0", "0", "10.578049659729004", "0", "0", "0", "map", "odom"],
+            'borregasave.osm' : ["0", "0", "0", "0", "0", "0", "map", "odom"],
         }
 
     def pointcloud_map_pipeline(self):
-        return None
+        pointcloud_map_loader = Node(
+            package="map_loader",
+            executable="pointcloud_map_loader",
+            name="pointcloud_map_loader",
+            remappings=[("output/pointcloud_map", "pointcloud_map")],
+            parameters=[
+                {"pcd_paths_or_directory": [ self.pointcloud_map ]}
+            ],
+            condition=IfCondition(LaunchConfiguration('use_pointcloud_map'))
+        )
 
+        map_tf_generator = Node(
+            package="map_tf_generator",
+            executable="map_tf_generator",
+            name="map_tf_generator",
+            parameters=[
+                {
+                    "map_frame": "map",
+                    "viewer_frame": "viewer",
+                }
+            ],
+            condition=IfCondition(LaunchConfiguration('use_pointcloud_map'))
+        )
+
+
+        return [pointcloud_map_loader, map_tf_generator]
 
     def lanelet2_map_pipeline(self):
 
@@ -77,7 +102,8 @@ class Map:
                 {
                     'use_sim_time' : LaunchConfiguration('use_sim_time')
                 }
-            ]
+            ],
+            condition=UnlessCondition(LaunchConfiguration('use_pointcloud_map'))
         )
         ###only use when LGSVL Simulation without pointcloud map
         ###if Simulate only with lanelet2 map, fix the z value from the LGSVL 
@@ -94,13 +120,11 @@ def launch_setup(context, *args, **kwargs):
 
     nodes = list()
     
-    # pointcloud_map_nodes = pipeline.pointcloud_map()
+    pointcloud_map_nodes = pipeline.pointcloud_map_pipeline()
     lanelet2_map_nodes = pipeline.lanelet2_map_pipeline()
-    # map_nodes = pipeline.map()
 
-    # nodes.extend(pointcloud_map_nodes)
+    nodes.extend(pointcloud_map_nodes)
     nodes.extend(lanelet2_map_nodes)
-    # nodes.extend(map_nodes)
 
     return nodes
 
@@ -116,7 +140,8 @@ def generate_launch_description():
         get_package_share_directory('ichthus_launch'), 'param/lanelet2_map_loader.param.yaml'
     )
     add_launch_arg('pointcloud_map', '')
-    add_launch_arg('lanelet2_map', 'SanFrancisco.osm'),
+    add_launch_arg('lanelet2_map', 'SanFrancisco.osm')
+    add_launch_arg('pointcloud_map','Borregasave.pcd')
     add_launch_arg('use_pointcloud_map', 'False')
     add_launch_arg('lanelet2_map_loader_param_path', lanelet2_map_loader_param_path_default)
     add_launch_arg('use_sim_time', 'False')

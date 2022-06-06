@@ -36,21 +36,21 @@ class LGSVL:
     
     def lgsvl(self):
 
-        urdf_path = LaunchConfiguration('urdf_path').perform(self.context)
-        with open(urdf_path, 'r') as infp:
-            urdf_file = infp.read()
+        # urdf_path = LaunchConfiguration('urdf_path').perform(self.context)
+        # with open(urdf_path, 'r') as infp:
+        #     urdf_file = infp.read()
         
-        urdf_publisher = Node(
-            package='robot_state_publisher',
-            executable='robot_state_publisher',
-            name='urdf_publisher',
-            parameters=[
-                {
-                    'robot_description': urdf_file,
-                    'use_sim_time' : LaunchConfiguration('use_sim_time')
-                }
-            ],
-        )
+        # urdf_publisher = Node(
+        #     package='robot_state_publisher',
+        #     executable='robot_state_publisher',
+        #     name='urdf_publisher',
+        #     parameters=[
+        #         {
+        #             'robot_description': urdf_file,
+        #             'use_sim_time' : LaunchConfiguration('use_sim_time')
+        #         }
+        #     ],
+        # )
 
         lgsv_interface_param_path = LaunchConfiguration('lgsvl_interface_param_path').perform(self.context)
         with open(lgsv_interface_param_path, 'r') as f:
@@ -81,7 +81,25 @@ class LGSVL:
             ]
         )
 
-        return [urdf_publisher, lgsvl_interface]
+        state_report = Node(
+            package='state_report',
+            executable='state_report_node',
+            name='state_report',
+            remappings=[
+                ('input/vehicle_kinematic_state', '/vehicle/vehicle_kinematic_state'),
+                ('input/turn_indicators_command', '/control/command/turn_indicators_cmd'),
+                ('output/vehicle_velocity_report', '/vehicle/status/velocity_status'),
+                ('output/turn_indicators_report', '/vehicle/status/turn_indicators_status'),
+                ('output/steering_report', '/vehicle/status/steering_status')
+            ],
+            parameters=[
+                {
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                }
+            ]
+        )
+
+        return [lgsvl_interface, state_report]
 
     
 def launch_setup(context, *args, **kwargs):
@@ -99,9 +117,9 @@ def generate_launch_description():
         get_package_share_directory('ichthus_launch'), 'param/vehicle_info.param.yaml'
     )
 
-    urdf_path_default = os.path.join(
-        get_package_share_directory('ichthus_launch'), 'urdf/lexus_rx_450h.urdf'
-    )
+    # urdf_path_default = os.path.join(
+    #     get_package_share_directory('ichthus_launch'), 'urdf/lexus_rx_450h.urdf'
+    # )
 
     lgsvl_interface_param_path_default = os.path.join(
         get_package_share_directory('ichthus_launch'), 'param/lgsvl_interface.param.yaml'
@@ -109,7 +127,7 @@ def generate_launch_description():
 
     add_launch_arg('vehicle_info_param_path', vehicle_info_param_path_default)
     add_launch_arg('lgsvl_interface_param_path', lgsvl_interface_param_path_default)
-    add_launch_arg('urdf_path', urdf_path_default)
+    # add_launch_arg('urdf_path', urdf_path_default)
     add_launch_arg('use_sim_time', 'False')
 
     return launch.LaunchDescription(

@@ -4,7 +4,12 @@
     # Latitude of map_origin
     # latitude: 40.816617984672746
     # longitude: 29.360491808334285
+
+    ##SanFrancisco
     latitude: 37.79318886541425
     longitude: -122.39984922532807
-    # Longitude of map_origin
+
+    #BorregasAve
+    # latitude: 37.416910205894
+    # longitude: -122.016032188409
     

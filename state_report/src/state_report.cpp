@@ -44,6 +44,7 @@ class StateReportNode : public rclcpp::Node
                 steering_report_pub->publish(steering_report);
                 autoware_auto_vehicle_msgs::msg::VelocityReport vehicle_velocity_report;
                 vehicle_velocity_report.header = msg->header;
+                vehicle_velocity_report.header.frame_id = "base_link";
                 vehicle_velocity_report.longitudinal_velocity = msg->state.longitudinal_velocity_mps;
                 vehicle_velocity_report.lateral_velocity = msg->state.lateral_velocity_mps;
                 vehicle_velocity_report.heading_rate = msg->state.heading_rate_rps;
