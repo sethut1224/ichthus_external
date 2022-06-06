@@ -169,6 +169,31 @@ class Sensing:
 
         return [occupancy_grid_map, occupancy_grid_map_outlier_filter]
 
+    def imu(self):
+        
+        imu_corrector_param_path = LaunchConfiguration('imu_corrector_param_path').perform(self.context)
+
+        with open(imu_corrector_param_path, "r") as f:
+            imu_corrector_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+        imu_corrector = Node(
+            package='imu_corrector',
+            executable='imu_corrector',
+            name='imu_corrector',
+            remappings=[
+                ('input', '/imu/imu_raw'),
+                ('output', '/imu/imu_data')
+            ],
+            parameters =[
+                imu_corrector_param,
+                {
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                }
+            ]
+        )
+
+        return [imu_corrector]
+
 def launch_setup(context, *args, **kwargs):
     pipeline = Sensing(context)
 
@@ -182,9 +207,11 @@ def launch_setup(context, *args, **kwargs):
 
     lidar_preprocess_nodes = pipeline.lidar_preprocess(raw_pointcloud, range_cropped_pointcloud, no_ground_pointcloud)
     occupancy_grid_map_nodes = pipeline.occupancy_grid_map(no_ground_pointcloud, range_cropped_pointcloud, grid_map, obstacle_segmentation_pointcloud)
+    imu_nodes = pipeline.imu()
 
     nodes.extend(lidar_preprocess_nodes)
     nodes.extend(occupancy_grid_map_nodes)
+    nodes.extend(imu_nodes)
 
     return nodes
 
@@ -203,6 +230,10 @@ def generate_launch_description():
         get_package_share_directory('ichthus_launch'), 'param/voxel_grid_filter.param.yaml'
     )
 
+    imu_corrector_param_path_default = os.path.join(
+        get_package_share_directory('ichthus_launch'), 'param/imu_corrector.param.yaml'
+    )
+
     add_launch_arg('raw_pointcloud_topic', '/lidar_front/points_raw'),
     add_launch_arg('no_ground_pointcloud_topic', '/lidar_front/no_ground_pointcloud'),
     add_launch_arg('range_cropped_pointcloud_topic', '/lidar_front/range_cropped_pointcloud')
@@ -211,7 +242,9 @@ def generate_launch_description():
     add_launch_arg('vehicle_info_param_path', vehicle_info_param_path_default),
     add_launch_arg('use_sim_time', 'False')
     add_launch_arg('voxel_grid_downsample_filter_param_path', voxel_grid_downsample_filter_param_path_default)
+    add_launch_arg('imu_corrector_param_path', imu_corrector_param_path_default)
     add_launch_arg('use_multi_lidar', 'False')
+
     return launch.LaunchDescription(
         launch_arguments 
         + [OpaqueFunction(function=launch_setup)]

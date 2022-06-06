@@ -24,7 +24,7 @@ class Map:
         
         self.map_odom_tf_dict = {
             'SanFrancisco.osm' : ["0", "0", "10.578049659729004", "0", "0", "0", "map", "odom"],
-            'borregasave.osm' : ["0", "0", "0", "0", "0", "0", "map", "odom"],
+            'BorregasAve.osm' : ["0", "0", "0", "0", "0", "0", "map", "odom"],
         }
 
     def pointcloud_map_pipeline(self):
@@ -60,7 +60,8 @@ class Map:
         lanelet2_map_loader_param_path = LaunchConfiguration('lanelet2_map_loader_param_path').perform(self.context)
         with open(lanelet2_map_loader_param_path, 'r') as f:
             lanelet2_map_loader_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-
+        lanelet2_map_loader_param = lanelet2_map_loader_param[LaunchConfiguration('lanelet2_map').perform(self.context)]
+        
         lanelet2_map_loader = Node(
             package="map_loader",
             executable='lanelet2_map_loader',
@@ -140,11 +141,12 @@ def generate_launch_description():
         get_package_share_directory('ichthus_launch'), 'param/lanelet2_map_loader.param.yaml'
     )
     add_launch_arg('pointcloud_map', '')
-    add_launch_arg('lanelet2_map', 'SanFrancisco.osm')
-    add_launch_arg('pointcloud_map','Borregasave.pcd')
+    add_launch_arg('lanelet2_map', 'BorregasAve.osm')
+    add_launch_arg('pointcloud_map','BorregasAve.pcd')
     add_launch_arg('use_pointcloud_map', 'False')
     add_launch_arg('lanelet2_map_loader_param_path', lanelet2_map_loader_param_path_default)
     add_launch_arg('use_sim_time', 'False')
+
     return launch.LaunchDescription(
         launch_arguments 
         + [OpaqueFunction(function=launch_setup)]

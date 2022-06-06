@@ -49,7 +49,8 @@ class Planning:
         self.obstacle_avoidance_planner_param_path = self.obstacle_planner_param_directory_path + 'obstacle_avoidance_planner/obstacle_avoidance_planner.param.yaml'
         self.obstacle_stop_planner_param_path =self.obstacle_planner_param_directory_path + 'obstacle_stop_planner/obstacle_stop_planner.param.yaml'
         self.adaptive_curise_control_param_path = self.obstacle_planner_param_directory_path + 'obstacle_stop_planner/adaptive_cruise_control.param.yaml'
-        
+        self.obstacle_cruise_planner_param_path = self.obstacle_planner_param_directory_path + 'obstacle_cruise_planner/obstacle_cruise_planner.param.yaml'
+
         self.common_param_path = LaunchConfiguration('common_param_path').perform(self.context)
         self.smoother_param_directory_path = LaunchConfiguration('smoother_param_directory_path').perform(self.context)
         self.smoother_type = LaunchConfiguration('smoother_type').perform(self.context)
@@ -310,6 +311,8 @@ class Planning:
             obstacle_stop_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
         with open(self.adaptive_curise_control_param_path, "r") as f:
             adaptive_curise_control_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+        with open(self.obstacle_cruise_planner_param_path, "r") as f:
+            obstacle_cruise_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
         with open(self.common_param_path, "r") as f:
             common_param = yaml.safe_load(f)["/**"]["ros__parameters"]
         with open(self.motion_velocity_smoother_param_path, "r") as f:
@@ -368,6 +371,29 @@ class Planning:
             ],
         )
 
+        obstacle_cruise_planner = Node(
+            package="obstacle_cruise_planner",
+            executable="obstacle_cruise_planner",
+            name="obstacle_cruise_planner",
+            remappings=[
+                ("~/input/trajectory", "obstacle_avoidance_planner/trajectory"),
+                ("~/input/odometry", "/lgsvl/gnss_odom"),
+                ("~/input/objects", "/perception/object_recognition/objects"),
+                ("~/output/trajectory", "/planning/scenario_planning/lane_driving/trajectory"),
+                ("~/output/velocity_limit", "/planning/scenario_planning/max_velocity_candidates"),
+                ("~/output/clear_velocity_limit", "/planning/scenario_planning/clear_velocity_limit"),
+                ("~/output/stop_reasons", "/planning/scenario_planning/status/stop_reasons"),
+            ],
+            parameters=[
+                common_param,
+                self.vehicle_info,
+                obstacle_cruise_planner_param,
+                {
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                }
+            ],
+        )
+
         external_velocity_limit_selector = Node(
             package='external_velocity_limit_selector',
             executable='external_velocity_limit_selector',
@@ -413,7 +439,7 @@ class Planning:
 
 
 
-        return [obstacle_avoidance_planner, obstacle_stop_planner, external_velocity_limit_selector, motion_velocity_smoother]
+        return [obstacle_avoidance_planner, obstacle_cruise_planner, external_velocity_limit_selector, motion_velocity_smoother]
 
 def launch_setup(context, *args, **kwargs):
     pipeline = Planning(context)

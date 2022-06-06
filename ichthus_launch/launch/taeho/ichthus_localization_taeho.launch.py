@@ -58,7 +58,28 @@ class Localization:
             ],
             remappings=[
                 ('velocity_status', '/vehicle/status/velocity_status'),
-                ('twist_with_covariance', '/vehicle_velocity_converter/twist_with_covariance')
+                ('twist_with_covariance', '/localization/twist_estimator/vehicle_velocity_converter/twist_with_covariance')
+            ]
+        )
+
+        gyro_odometer = Node(
+            package='gyro_odometer',
+            executable='gyro_odometer',
+            name='gyro_odometer',
+            remappings=[
+                ('vehicle/twist_with_covariance', '/localization/twist_estimator/vehicle_velocity_converter/twist_with_covariance'),
+                ('imu', '/imu/imu_data'),
+                ('twist_raw','gyro_twist_raw'),
+                ('twist_with_covariance_raw', '/localization/twist_estimator/twist_with_covariance_raw'),
+                ('twist', 'gyro_twist'),
+                ('twist_with_covariance', '/localization/twist_estimator/twist_with_covariance')
+            ],
+            parameters=[
+                {
+                    'output_frame' : 'base_link',
+                    'message_timeout_sec' : 0.2,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time'),
+                }
             ]
         )
 
@@ -75,10 +96,10 @@ class Localization:
 
             remappings=[
                 ('points_raw', downsampled_pointcloud),
-                ('ekf_pose_with_covariance', '/localization/pose_with_covariance'),
+                ('ekf_pose_with_covariance', '/localization/pose_twist_fusion_filter/pose_with_covariance'),
                 ('pointcloud_map', '/pointcloud_map'),
-                ('ndt_pose', '/ndt_pose'),
-                ('ndt_pose_with_covariacne','/ndt_pose_with_covariance')
+                ('ndt_pose', '/localization/pose_estimator/pose'),
+                ('ndt_pose_with_covariance','/localization/pose_estimator/pose_with_covariance')
             ]
         )
 
@@ -91,15 +112,15 @@ class Localization:
                     'pose_frame_id' : 'map',
                     'show_debug_info' : False,
                     'enable_yaw_bias_estimation' : False,
-                    'predict_frequency' : 100.0,
-                    'tf_rate' : 100.0,
+                    'predict_frequency' : 50.0,
+                    'tf_rate' : 50.0,
                     'extend_state_step' : 50,
                     'pose_additional_delay' : 0.0,
                     'pose_measure_uncertainty_time' : 0.01,
                     'pose_rate' : 10.0,
                     'pose_gate_dist' : 10000.0,
                     'twist_additional_delay' : 0.0,
-                    'twist_rate' : 100.0,
+                    'twist_rate' : 50.0,
                     'twist_gate_dist' : 10000.0,
                     'proc_stddev_vx_c' : 5.0,
                     'proc_stddev_wz_c' : 1.0,
@@ -110,15 +131,15 @@ class Localization:
                 }
             ],
             remappings=[
-                ('in_pose_with_covariance', '/ndt_pose_with_covariance'),
-                ('in_twist_with_covariance', '/vehicle_velocity_converter/twist_with_covariance'),
-                ('ekf_odom', '/localization/ekf_localizer/kinematic_state'),
-                ('ekf_pose', '/localization/pose'),
-                ('ekf_pose_with_covariance', '/localization/pose_with_covariance'),
-                ('ekf_pose_without_yawbias', '/localization/pose_without_yawbias'),
-                ('ekf_pose_with_covariance_without_yawbias', '/localization/pose_with_covariance_without_yawbias'),
-                ('ekf_twist','/localization/twist'),
-                ('ekf_twist_with_covariance', '/localization/ekf_localizer/twist_with_covariance')
+                ('in_pose_with_covariance', '/localization/pose_estimator/pose_with_covariance'),
+                ('in_twist_with_covariance', '/localization/twist_estimator/twist_with_covariance'),
+                ('ekf_odom', '/localization/pose_twist_fusion_filter/kinematic_state'),
+                ('ekf_pose', '/localization/pose_twist_fusion_filter/pose'),
+                ('ekf_pose_with_covariance', '/localization/pose_twist_fusion_filter/pose_with_covariance'),
+                ('ekf_pose_without_yawbias', '/localization/pose_twist_fusion_filter/pose_without_yawbias'),
+                ('ekf_pose_with_covariance_without_yawbias', '/localization/pose_twist_fusion_filter/pose_with_covariance_without_yawbias'),
+                ('ekf_twist','/localization/pose_twist_fusion_filter/twist'),
+                ('ekf_twist_with_covariance', '/localization/pose_twist_fusion_filter/twist_with_covariance')
             ]
         )
 
@@ -127,8 +148,8 @@ class Localization:
             executable='stop_filter',
             name='stop_filter',
             remappings=[
-                ('input/odom','/localization/ekf_localizer/kinematic_state'),
-                ('input_twist_with_covariance_name', '/localization/ekf_localizer/twist_with_covariance'),
+                ('input/odom','/localization/pose_twist_fusion_filter/kinematic_state'),
+                ('input_twist_with_covariance_name', '/localization/pose_twist_fusion_filter/twist_with_covariance'),
                 ('/output/odom', '/localization/kinematic_state')
             ],
             parameters=[
@@ -140,8 +161,7 @@ class Localization:
             ]
         )
 
-        return [vehicle_velocity_converter, ekf_localizer, ndt_scan_matcher, stop_filter]
-        #imu_corrector, vehicle_velocity_converter, gyro_odometer ekf_localizer
+        return [vehicle_velocity_converter, gyro_odometer, ekf_localizer, ndt_scan_matcher, stop_filter]
 
 def launch_setup(context, *args, **kwargs):
     pipeline = Localization(context)
