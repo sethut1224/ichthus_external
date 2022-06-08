@@ -20,7 +20,8 @@ class Control:
     def __init__(self, context):
         self.context = context
         self.vehicle_info = self.get_vehicle_info()
-    
+        self.kinematic_state = LaunchConfiguration('kinematic_state')
+
     def get_vehicle_info(self):
         path = LaunchConfiguration('vehicle_info_param_path').perform(self.context)
         with open(path, 'r') as f:
@@ -57,7 +58,7 @@ class Control:
             name="lateral_controller",
             remappings=[
                 ("~/input/reference_trajectory", "/planning/scenario_planning/trajectory"),
-                ("~/input/current_odometry", "/lgsvl/gnss_odom"),
+                ("~/input/current_odometry", self.kinematic_state),
                 ("~/input/current_steering", "/vehicle/status/steering_status"),
                 ("~/output/control_cmd", "lateral/control_cmd"),
                 ("~/output/predicted_trajectory", "lateral/predicted_trajectory"),
@@ -78,7 +79,7 @@ class Control:
             name="longitudinal_controller",
             remappings=[
                 ("~/input/current_trajectory", "/planning/scenario_planning/trajectory"),
-                ("~/input/current_odometry", "/lgsvl/gnss_odom"),
+                ("~/input/current_odometry", self.kinematic_state),
                 ("~/output/control_cmd", "longitudinal/control_cmd"),
                 ("~/output/slope_angle", "longitudinal/slope_angle"),
             ("~/output/diagnostic", "longitudinal/diagnostic"),
@@ -205,6 +206,7 @@ def generate_launch_description():
     add_launch_arg('vehicle_cmd_gate_param_path', vehicle_cmd_gate_param_path_default)
 
     add_launch_arg('use_sim_time', 'False')
+    add_launch_arg('kinematic_state', 'lgsvl/gnss_odom')
     return launch.LaunchDescription(
         launch_arguments 
         + [OpaqueFunction(function=launch_setup)]

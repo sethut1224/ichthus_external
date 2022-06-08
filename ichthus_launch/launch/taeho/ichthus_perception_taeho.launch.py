@@ -147,7 +147,7 @@ class Perception:
             parameters=[
                 lidar_centerpoint_param,
                 {
-                    'score_threshold' : 0.45,
+                    'score_threshold' : 0.4,
                     'densification_world_frame_id' : 'map',
                     'densification_num_past_frames' : 1,
                     'trt_precision' : 'fp16',
@@ -160,19 +160,6 @@ class Perception:
             ],
             condition = IfCondition(LaunchConfiguration('use_centerpoint'))
         )
-        
-
-    #     <remap from="~/input/pointcloud" to="$(var input/pointcloud)"/>
-    # <remap from="~/output/objects" to="$(var output/objects)"/>
-    # <param name="score_threshold" value="0.45"/>
-    # <param name="densification_world_frame_id" value="map"/>
-    # <param name="densification_num_past_frames" value="1"/>
-    # <param name="trt_precision" value="fp16"/>
-    # <param name="encoder_onnx_path" value="$(var model_path)/pts_voxel_encoder_$(var model_name).onnx"/>
-    # <param name="encoder_engine_path" value="$(var model_path)/pts_voxel_encoder_$(var model_name).engine"/>
-    # <param name="head_onnx_path" value="$(var model_path)/pts_backbone_neck_head_$(var model_name).onnx"/>
-    # <param name="head_engine_path" value="$(var model_path)/pts_backbone_neck_head_$(var model_name).engine"/>
-    # <param from="$(var model_param_path)"/>
 
         # lidar_apollo_instance_segmentation_param_path = LaunchConfiguration('lidar_apollo_instance_segmentation_param_path').perform(self.context)
 

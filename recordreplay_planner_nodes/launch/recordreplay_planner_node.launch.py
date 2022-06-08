@@ -36,7 +36,7 @@ def generate_launch_description():
         ],
         remappings=[
             # ('vehicle_state', '/vehicle/vehicle_kinematic_state'),
-            ('/input/current_odometry', '/localization/ekf_localizer/kinematic_state'),
+            ('/input/current_odometry', '/localization/kinematic_state'),
             ('planned_trajectory', '/planning/scenario_planning/trajectory'),
             ('obstacle_bounding_boxes', '/perception/lidar_bounding_boxes'),
         ]

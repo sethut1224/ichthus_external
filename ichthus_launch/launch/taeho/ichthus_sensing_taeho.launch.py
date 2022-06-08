@@ -21,7 +21,7 @@ class Sensing:
         self.context = context
         self.vehicle_info = self.get_vehicle_info()
         self.use_multi_lidar = LaunchConfiguration('use_multi_lidar').perform(self.context)
-        self.raw_pointcloud = '/lidar_front/points_raw' if self.use_multi_lidar == 'false' else 'concatenated/pointcloud'
+        self.raw_pointcloud = LaunchConfiguration('raw_pointcloud_topic').perform(self.context) if self.use_multi_lidar == 'false' else 'concatenated/pointcloud'
 
     def get_vehicle_info(self):
         path = LaunchConfiguration('vehicle_info_param_path').perform(self.context)
@@ -101,6 +101,7 @@ class Sensing:
                     'voxel_size_x' : 2.0,
                     'voxel_size_y' : 2.0,
                     'voxel_size_z' : 2.0,
+                    'max_queue_size' : 1,
                     'use_sim_time' : LaunchConfiguration('use_sim_time'),
                 }
             ],
@@ -116,16 +117,21 @@ class Sensing:
             ],
             parameters=[
                 {
-                    "global_slope_max_angle_deg": 8.0,
-                    "local_slope_max_angle_deg": 6.0,
+                    "global_slope_max_angle_deg": 10.0,
+                    "local_slope_max_angle_deg": 30.0,
                     "split_points_distance_tolerance": 0.2,
-                    "split_height_distance": 0.2,
+                    "split_height_distance": 0.3,
                     'max_queue_size' : 1,
+                    'use_virtual_ground_point' : True,
                     'use_sim_time' : LaunchConfiguration('use_sim_time')
                 },
                 self.vehicle_info
             ],
         )
+        # "global_slope_max_angle_deg": 8.0,
+        # "local_slope_max_angle_deg": 6.0,
+        # "split_points_distance_tolerance": 0.2,
+        # "split_height_distance": 0.2,
 
         return [concatenate_filter, crop_box_filter, voxel_grid_downsample_filter, scan_ground_filter]
         

@@ -47,7 +47,8 @@ class StateReportNode : public rclcpp::Node
                 vehicle_velocity_report.header.frame_id = "base_link";
                 vehicle_velocity_report.longitudinal_velocity = msg->state.longitudinal_velocity_mps;
                 vehicle_velocity_report.lateral_velocity = msg->state.lateral_velocity_mps;
-                vehicle_velocity_report.heading_rate = msg->state.heading_rate_rps;
+                vehicle_velocity_report.heading_rate = msg->state.longitudinal_velocity_mps * (tan(msg->state.front_wheel_angle_rad) / 2.734);
+                // vehicle_velocity_report.heading_rate = msg->state.heading_rate_rps;
                 vehicle_velocity_report_pub->publish(vehicle_velocity_report);
             });
 

@@ -21,6 +21,9 @@ class Map:
         self.base_path = os.path.join(get_package_share_directory('ichthus_launch'), 'map/',)
         self.lanelet2_map = self.base_path + LaunchConfiguration('lanelet2_map').perform(self.context)
         self.pointcloud_map = self.base_path + LaunchConfiguration('pointcloud_map').perform(self.context)
+        # self.pointcloud_map = '/root/shared_dir/20190512_soongsil_0.2.pcd'
+        # self.lanelet2_map = '/root/shared_dir/soongsil_map_test.osm'
+
         
         self.map_odom_tf_dict = {
             'SanFrancisco.osm' : ["0", "0", "10.578049659729004", "0", "0", "0", "map", "odom"],
@@ -34,7 +37,24 @@ class Map:
             name="pointcloud_map_loader",
             remappings=[("output/pointcloud_map", "pointcloud_map")],
             parameters=[
-                {"pcd_paths_or_directory": [ self.pointcloud_map ]}
+                {
+                    "pcd_paths_or_directory": [ self.pointcloud_map ],
+                    'use_sim_time' : LaunchConfiguration('use_sim_time'),
+                }
+            ],
+            condition=IfCondition(LaunchConfiguration('use_pointcloud_map'))
+        )
+
+        map_hash_generator = Node(
+            package="map_loader",
+            executable="map_hash_generator",
+            name="map_hash_generator",
+            parameters=[
+                {
+                    "lanelet2_map_path": self.lanelet2_map,
+                    "pointcloud_map_path": self.pointcloud_map,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time'),
+                }
             ],
             condition=IfCondition(LaunchConfiguration('use_pointcloud_map'))
         )
@@ -47,6 +67,7 @@ class Map:
                 {
                     "map_frame": "map",
                     "viewer_frame": "viewer",
+                    'use_sim_time' : LaunchConfiguration('use_sim_time'),
                 }
             ],
             condition=IfCondition(LaunchConfiguration('use_pointcloud_map'))
@@ -73,11 +94,12 @@ class Map:
                 {
                     "center_line_resolution": 5.0,
                     "lanelet2_map_path": self.lanelet2_map,
-                    "lanelet2_map_projector_type": "UTM",  # Options: MGRS, UTM
+                    "lanelet2_map_projector_type": "MGRS",  # Options: MGRS, UTM
                     'use_sim_time' : LaunchConfiguration('use_sim_time')
                 },
                 lanelet2_map_loader_param
             ],
+            condition=IfCondition(LaunchConfiguration('use_lanelet2_map'))
         )
 
         lanelet2_map_visualization = Node(
@@ -92,7 +114,8 @@ class Map:
                 {
                     'use_sim_time' : LaunchConfiguration('use_sim_time')
                 }
-            ]
+            ],
+            condition=IfCondition(LaunchConfiguration('use_lanelet2_map'))
         )
 
         map_odom_publisher = Node(
@@ -140,10 +163,12 @@ def generate_launch_description():
     lanelet2_map_loader_param_path_default = os.path.join(
         get_package_share_directory('ichthus_launch'), 'param/lanelet2_map_loader.param.yaml'
     )
+
     add_launch_arg('pointcloud_map', '')
     add_launch_arg('lanelet2_map', 'BorregasAve.osm')
     add_launch_arg('pointcloud_map','BorregasAve.pcd')
     add_launch_arg('use_pointcloud_map', 'False')
+    add_launch_arg('use_lanelet2_map', 'False')
     add_launch_arg('lanelet2_map_loader_param_path', lanelet2_map_loader_param_path_default)
     add_launch_arg('use_sim_time', 'False')
 

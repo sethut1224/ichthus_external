@@ -5,7 +5,6 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /Map1/PointCloudMap1
         - /Map1/Lanelet2VectorMap1/Namespaces1
         - /Sensing1/Lidar1/PointCloud21
         - /Sensing1/Lidar1/PointCloud21/Topic1
@@ -13,7 +12,7 @@ Panels:
         - /Perception1/Camera1
         - /Planning1/MissionPlanning1/Pose1
         - /Planning1/MotionPlanning1
-      Splitter Ratio: 0.3821428716182709
+      Splitter Ratio: 0.4382352828979492
     Tree Height: 609
   - Class: rviz_common/Selection
     Name: Selection
@@ -113,22 +112,22 @@ Visualization Manager:
           Visual Enabled: true
         - Class: rviz_plugins/MaxVelocity
           Enabled: true
-          Left: 815
-          Length: 96
+          Left: 325
+          Length: 90
           Name: MaxVelocity
           Text Color: 255; 255; 255
-          Top: 280
+          Top: 110
           Topic: /planning/scenario_planning/current_max_velocity
           Value: true
-          Value Scale: 0.25
+          Value Scale: 0.20000000298023224
         - Class: rviz_plugins/SteeringAngle
           Enabled: true
-          Left: 120
-          Length: 200
+          Left: 10
+          Length: 140
           Name: SteeringAngle
           Scale: 3
           Text Color: 25; 255; 240
-          Top: 128
+          Top: 20
           Topic:
             Depth: 5
             Durability Policy: Volatile
@@ -140,10 +139,10 @@ Visualization Manager:
           Value height offset: 0
         - Class: rviz_plugins/TurnSignal
           Enabled: true
-          Height: 256
-          Left: 340
+          Height: 120
+          Left: 170
           Name: TurnSignal
-          Top: 200
+          Top: 30
           Topic:
             Depth: 5
             Durability Policy: Volatile
@@ -151,14 +150,14 @@ Visualization Manager:
             Reliability Policy: Reliable
             Value: /vehicle/status/turn_indicators_status
           Value: true
-          Width: 400
+          Width: 120
         - Class: rviz_plugins/ConsoleMeter
           Enabled: true
-          Left: 760
-          Length: 200
+          Left: 300
+          Length: 140
           Name: ConsoleMeter
           Text Color: 25; 255; 240
-          Top: 128
+          Top: 20
           Topic:
             Depth: 5
             Durability Policy: Volatile
@@ -189,7 +188,9 @@ Visualization Manager:
               Value: true
             nav_base:
               Value: true
-            odom:
+            ndt_base_link:
+              Value: true
+            viewer:
               Value: true
           Marker Scale: 5
           Name: TF
@@ -198,20 +199,23 @@ Visualization Manager:
           Show Names: true
           Tree:
             map:
-              odom:
-                base_link:
-                  camera:
-                    {}
-                  gnss:
-                    {}
-                  imu:
-                    {}
-                  lidar_front:
-                    {}
-                  lidar_rear:
-                    {}
-                  nav_base:
-                    {}
+              base_link:
+                camera:
+                  {}
+                gnss:
+                  {}
+                imu:
+                  {}
+                lidar_front:
+                  {}
+                lidar_rear:
+                  {}
+                nav_base:
+                  {}
+              ndt_base_link:
+                {}
+              viewer:
+                {}
           Update Interval: 0
           Value: true
       Enabled: true
@@ -297,9 +301,9 @@ Visualization Manager:
               Enabled: true
               Invert Rainbow: false
               Max Color: 255; 255; 255
-              Max Intensity: 255
+              Max Intensity: 171
               Min Color: 0; 0; 0
-              Min Intensity: 0
+              Min Intensity: 5
               Name: PointCloud2
               Position Transformer: XYZ
               Selectable: true
@@ -375,10 +379,7 @@ Visualization Manager:
             Color: 119; 11; 32
           Name: PredictedObjects
           Namespaces:
-            label: true
-            path: true
-            shape: true
-            velocity: true
+            {}
           PEDESTRIAN:
             Alpha: 0.9990000128746033
             Color: 255; 192; 203
@@ -801,6 +802,57 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /obstacle_cruise_planner/virtual_wall
       Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: MarkerArray
+      Namespaces:
+        result_pose_matrix_array: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /ndt_marker
+      Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz_default_plugins/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: false
+      Enabled: true
+      Keep: 100
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.5
+        Value: Arrow
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /localization/kinematic_state
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 10; 10; 10
@@ -869,7 +921,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 2.3650002479553223
+      Angle: 0
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -882,8 +934,8 @@ Visualization Manager:
       Scale: 10
       Target Frame: base_link
       Value: TopDownOrtho (rviz_default_plugins)
-      X: -7.340901851654053
-      Y: -8.424142837524414
+      X: 0
+      Y: 0
     Saved:
       - Class: rviz_default_plugins/ThirdPersonFollower
         Distance: 18

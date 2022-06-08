@@ -34,7 +34,7 @@ class Planning:
         self.bt_tree_config_param_path = self.behavior_path_planner_param_directory_path + LaunchConfiguration('behavior_tree').perform(self.context)
 
         self.behavior_velocity_planner_param_directory_path = LaunchConfiguration('behavior_velocity_planner_param_directory_path').perform(self.context)
-
+        self.behavior_velocity_planner_param_path = self.behavior_velocity_planner_param_directory_path + 'behavior_velocity_planner.param.yaml'
         self.blind_spot_param_path = self.behavior_velocity_planner_param_directory_path + 'blind_spot.param.yaml'
         self.crosswalk_param_path = self.behavior_velocity_planner_param_directory_path + 'crosswalk.param.yaml'
         self.detection_area_param_path = self.behavior_velocity_planner_param_directory_path + 'detection_area.param.yaml'
@@ -56,6 +56,8 @@ class Planning:
         self.smoother_type = LaunchConfiguration('smoother_type').perform(self.context)
         self.smoother_param_path = self.smoother_param_directory_path + self.smoother_type +'.param.yaml'
         self.motion_velocity_smoother_param_path = LaunchConfiguration('motion_velocity_smoother_param_path').perform(self.context)
+
+        self.kinematic_state = LaunchConfiguration('kinematic_state').perform(self.context)
 
     def get_vehicle_info(self):
         path = LaunchConfiguration('vehicle_info_param_path').perform(self.context)
@@ -135,7 +137,7 @@ class Planning:
                 ("~/input/route", '/planning/mission_planning/route'),
                 ("~/input/vector_map", "/map/vector_map"),
                 ("~/input/perception", "/perception/object_recognition/objects"),
-                ("~/input/odometry", "/lgsvl/gnss_odom"),
+                ("~/input/odometry", self.kinematic_state),
                 ("~/input/scenario", "/planning/scenario_planning/scenario"),
                 (
                     "~/input/external_approval",
@@ -199,7 +201,7 @@ class Planning:
                 ('input/parking/trajectory', '/planning/scenario_planning/parking/trajectory'),
                 ('input/lanelet_map', '/map/vector_map'),
                 ('input/route', '/planning/mission_planning/route'),
-                ('input/odometry', '/lgsvl/gnss_odom'),
+                ('input/odometry', self.kinematic_state),
                 ('is_parking_completed', '/planning/scenario_planning/parking/is_completed'),
                 ('output/scenario' , '/planning/scenario_planning/scenario'),
                 ('output/trajectory', '/planning/scenario_planning/scenario_selector/trajectory'),
@@ -235,6 +237,8 @@ class Planning:
             traffic_light_param = yaml.safe_load(f)["/**"]["ros__parameters"]
         with open(self.virtual_traffic_light_param_path, "r") as f:
             virtual_traffic_light_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+        with open(self.behavior_velocity_planner_param_path, "r") as f:
+            behavior_velocity_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
         behavior_velocity_planner = Node(
             package="behavior_velocity_planner",
@@ -243,7 +247,7 @@ class Planning:
             remappings=[
                 ("~/input/path_with_lane_id", "path_with_lane_id"),
                 ("~/input/vector_map", "/map/vector_map"),
-                ("~/input/vehicle_odometry", "/lgsvl/gnss_odom"),
+                ("~/input/vehicle_odometry", self.kinematic_state),
                 ("~/input/dynamic_objects", "/perception/object_recognition/objects"),
                 (
                     "~/input/no_ground_pointcloud",
@@ -271,22 +275,7 @@ class Planning:
                 ("~/output/traffic_signal", "debug/traffic_signal"),
             ],
             parameters=[
-                {
-                    "launch_stop_line": True,
-                    "launch_crosswalk": True,
-                    "launch_traffic_light": True,
-                    "launch_intersection": True,
-                    "launch_blind_spot": True,
-                    "launch_detection_area": True,
-                    "launch_virtual_traffic_light": True,
-                    "launch_occlusion_spot": True,
-                    "launch_no_stopping_area": True,
-                    "forward_path_length": 1000.0,
-                    "backward_path_length": 1.0,
-                    "max_accel": -2.8,
-                    "delay_response_time": 0.5,
-                    'use_sim_time' : LaunchConfiguration('use_sim_time')
-                },
+                behavior_velocity_planner_param,
                 blind_spot_param,
                 crosswalk_param,
                 detection_area_param,
@@ -296,7 +285,12 @@ class Planning:
                 virtual_traffic_light_param,
                 occlusion_spot_param,
                 no_stopping_area_param,
-                self.vehicle_info
+                self.vehicle_info,
+                {
+                    # "backward_path_length": 1.0,
+                    "delay_response_time": 0.5,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                },
             ],
         )
 
@@ -326,7 +320,7 @@ class Planning:
             name="obstacle_avoidance_planner",
             remappings=[
                 ("~/input/objects", "/perception/object_recognition/objects"),
-                ('localization/kinematic_state', '/lgsvl/gnss_odom'),
+                ('localization/kinematic_state', self.kinematic_state),
                 ("~/input/path", '/planning/scenario_planning/lane_driving/behavior_planning/path'),
                 ("~/output/path", "obstacle_avoidance_planner/trajectory"),
             ],
@@ -358,7 +352,7 @@ class Planning:
                     "/perception/obstacle_segmentation/pointcloud",
                 ),
                 ("~/input/objects", "/perception/object_recognition/objects"),
-                ("~/input/odometry", "/lgsvl/gnss_odom"),
+                ("~/input/odometry", self.kinematic_state),
                 ("~/input/trajectory", "obstacle_avoidance_planner/trajectory"),
             ],
             parameters=[
@@ -377,7 +371,7 @@ class Planning:
             name="obstacle_cruise_planner",
             remappings=[
                 ("~/input/trajectory", "obstacle_avoidance_planner/trajectory"),
-                ("~/input/odometry", "/lgsvl/gnss_odom"),
+                ("~/input/odometry", self.kinematic_state),
                 ("~/input/objects", "/perception/object_recognition/objects"),
                 ("~/output/trajectory", "/planning/scenario_planning/lane_driving/trajectory"),
                 ("~/output/velocity_limit", "/planning/scenario_planning/max_velocity_candidates"),
@@ -389,7 +383,8 @@ class Planning:
                 self.vehicle_info,
                 obstacle_cruise_planner_param,
                 {
-                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                    'use_sim_time' : LaunchConfiguration('use_sim_time'),
+                    'is_showing_debug_info' : False
                 }
             ],
         )
@@ -422,7 +417,7 @@ class Planning:
                 ("~/output/trajectory", '/planning/scenario_planning/trajectory'),
                 ("~/input/external_velocity_limit_mps", "/planning/scenario_planning/max_velocity"),
                 ("~/output/current_velocity_limit_mps", '/planning/scenario_planning/current_max_velocity'),
-                ("/localization/kinematic_state", '/lgsvl/gnss_odom')
+                ("/localization/kinematic_state", self.kinematic_state)
             ],
             parameters=[
                 {
@@ -503,6 +498,7 @@ def generate_launch_description():
     add_launch_arg('smoother_type', 'JerkFiltered')
 
     add_launch_arg('use_sim_time', 'False')
+    add_launch_arg("kinematic_state", 'lgsvl/gnss_odom')
 
     return launch.LaunchDescription(
         launch_arguments

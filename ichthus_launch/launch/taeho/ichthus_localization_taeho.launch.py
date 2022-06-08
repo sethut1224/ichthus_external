@@ -45,6 +45,10 @@ class Localization:
         with open(vehicle_velocity_converter_param_path, 'r') as f:
             vehicle_velocity_converter_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
+        pose_initializer_param_path = LaunchConfiguration('pose_initializer_param_path').perform(self.context)
+        with open(pose_initializer_param_path, 'r') as f:
+            pose_initializer_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
         vehicle_velocity_converter = Node(
             package="vehicle_velocity_converter",
             executable='vehicle_velocity_converter',
@@ -82,6 +86,29 @@ class Localization:
                 }
             ]
         )
+
+        pose_initializer = Node(
+            package='pose_initializer',
+            executable='pose_initializer',
+            name='pose_initializer',
+            remappings=[
+                ('initialpose', '/initialpose'),
+                ('initialpose3d', '/initialpose3d'),
+                ('gnss_pose_cov', '/sensing/gnss/pose_with_covariance'),
+                ('pointcloud_map', '/pointcloud_map'),
+                ('ndt_align_srv', '/ndt_align_srv'),
+                ('service/initialize_pose', '/localization/util/initialize_pose'),
+                ('service/initialize_pose_auto', '/localization/util/initialize_pose_auto')
+            ],
+            parameters=[
+                pose_initializer_param,
+                {
+                    'enable_gnss_callback' : False,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time'),
+                }
+            ]
+        )
+
 
         ndt_scan_matcher = Node(
             package='ndt_scan_matcher',
@@ -131,6 +158,7 @@ class Localization:
                 }
             ],
             remappings=[
+                ('initialpose', 'initialpose3d'),
                 ('in_pose_with_covariance', '/localization/pose_estimator/pose_with_covariance'),
                 ('in_twist_with_covariance', '/localization/twist_estimator/twist_with_covariance'),
                 ('ekf_odom', '/localization/pose_twist_fusion_filter/kinematic_state'),
@@ -161,7 +189,7 @@ class Localization:
             ]
         )
 
-        return [vehicle_velocity_converter, gyro_odometer, ekf_localizer, ndt_scan_matcher, stop_filter]
+        return [vehicle_velocity_converter, gyro_odometer, pose_initializer, ekf_localizer, ndt_scan_matcher, stop_filter]
 
 def launch_setup(context, *args, **kwargs):
     pipeline = Localization(context)
@@ -193,11 +221,17 @@ def generate_launch_description():
         get_package_share_directory('ichthus_launch'), 'param/vehicle_velocity_converter.param.yaml'
     )
 
+    pose_initializer_param_path_default = os.path.join(
+        get_package_share_directory('ichthus_launch'), 'param/pose_initializer.param.yaml'
+    )
+
     add_launch_arg('downsampled_pointcloud', 'voxel_grid_downsample/pointcloud'),
     add_launch_arg('vehicle_info_param_path', vehicle_info_param_path_default),
     add_launch_arg('use_sim_time', 'False')
     add_launch_arg('ndt_scan_matcher_param_path', ndt_scan_matcher_param_path_default)
     add_launch_arg('vehicle_velocity_converter_param_path', vehicle_velocity_converter_param_path_default)
+    add_launch_arg('pose_initializer_param_path',pose_initializer_param_path_default)
+
     return launch.LaunchDescription(
         launch_arguments 
         + [OpaqueFunction(function=launch_setup)]
