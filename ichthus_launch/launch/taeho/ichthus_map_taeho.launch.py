@@ -18,17 +18,17 @@ from launch_ros.actions import Node
 class Map:
     def __init__(self, context):
         self.context = context
-        self.base_path = os.path.join(get_package_share_directory('ichthus_launch'), 'map/',)
-        self.lanelet2_map = self.base_path + LaunchConfiguration('lanelet2_map').perform(self.context)
-        self.pointcloud_map = self.base_path + LaunchConfiguration('pointcloud_map').perform(self.context)
-        # self.pointcloud_map = '/root/shared_dir/20190512_soongsil_0.2.pcd'
-        # self.lanelet2_map = '/root/shared_dir/soongsil_map_test.osm'
-
+        self.lanelet2_map_name = LaunchConfiguration('lanelet2_map').perform(self.context).split('/')[-1]
+        self.pointcloud_map_name = LaunchConfiguration('pointcloud_map').perform(self.context).split('/')[-1]
         
         self.map_odom_tf_dict = {
             'SanFrancisco.osm' : ["0", "0", "10.578049659729004", "0", "0", "0", "map", "odom"],
-            'BorregasAve.osm' : ["0", "0", "0", "0", "0", "0", "map", "odom"],
         }
+
+        if self.map_odom_tf_dict.get(self.lanelet2_map_name) != None:
+            self.map_odom_tf = self.map_odom_tf_dict[self.lanelet2_map_name]
+        else:
+            self.map_odom_tf = ["0", "0", "0", "0", "0", "0", "map", "odom"]
 
     def pointcloud_map_pipeline(self):
         pointcloud_map_loader = Node(
@@ -38,7 +38,7 @@ class Map:
             remappings=[("output/pointcloud_map", "pointcloud_map")],
             parameters=[
                 {
-                    "pcd_paths_or_directory": [ self.pointcloud_map ],
+                    "pcd_paths_or_directory": [ LaunchConfiguration('pointcloud_map').perform(self.context)],
                     'use_sim_time' : LaunchConfiguration('use_sim_time'),
                 }
             ],
@@ -51,8 +51,8 @@ class Map:
             name="map_hash_generator",
             parameters=[
                 {
-                    "lanelet2_map_path": self.lanelet2_map,
-                    "pointcloud_map_path": self.pointcloud_map,
+                    "lanelet2_map_path": LaunchConfiguration('lanelet2_map'),
+                    "pointcloud_map_path": LaunchConfiguration('pointcloud_map'),
                     'use_sim_time' : LaunchConfiguration('use_sim_time'),
                 }
             ],
@@ -81,7 +81,7 @@ class Map:
         lanelet2_map_loader_param_path = LaunchConfiguration('lanelet2_map_loader_param_path').perform(self.context)
         with open(lanelet2_map_loader_param_path, 'r') as f:
             lanelet2_map_loader_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-        lanelet2_map_loader_param = lanelet2_map_loader_param[LaunchConfiguration('lanelet2_map').perform(self.context)]
+        lanelet2_map_loader_param = lanelet2_map_loader_param[self.lanelet2_map_name]
         
         lanelet2_map_loader = Node(
             package="map_loader",
@@ -93,8 +93,8 @@ class Map:
             parameters=[
                 {
                     "center_line_resolution": 5.0,
-                    "lanelet2_map_path": self.lanelet2_map,
-                    "lanelet2_map_projector_type": "MGRS",  # Options: MGRS, UTM
+                    "lanelet2_map_path": LaunchConfiguration('lanelet2_map'),
+                    "lanelet2_map_projector_type": LaunchConfiguration('projector_type'),  # Options: MGRS, UTM
                     'use_sim_time' : LaunchConfiguration('use_sim_time')
                 },
                 lanelet2_map_loader_param
@@ -121,7 +121,7 @@ class Map:
         map_odom_publisher = Node(
             package='tf2_ros',
             executable='static_transform_publisher',
-            arguments=self.map_odom_tf_dict[LaunchConfiguration('lanelet2_map').perform(self.context)],
+            arguments=self.map_odom_tf,
             parameters=[
                 {
                     'use_sim_time' : LaunchConfiguration('use_sim_time')
@@ -134,9 +134,6 @@ class Map:
         ###z is decide by the /lgsvl/gnss_odom z value
         ###if /lgsvl/gnss_odom x: 100, y:100, z:10.578049659729004, the z value of arguments is 10.578049659729004
         return [lanelet2_map_loader, lanelet2_map_visualization, map_odom_publisher]
-
-    def map_pipeline(self):
-        return None
 
     
 def launch_setup(context, *args, **kwargs):
@@ -171,7 +168,7 @@ def generate_launch_description():
     add_launch_arg('use_lanelet2_map', 'False')
     add_launch_arg('lanelet2_map_loader_param_path', lanelet2_map_loader_param_path_default)
     add_launch_arg('use_sim_time', 'False')
-
+    add_launch_arg('projector_type', 'UTM')
     return launch.LaunchDescription(
         launch_arguments 
         + [OpaqueFunction(function=launch_setup)]

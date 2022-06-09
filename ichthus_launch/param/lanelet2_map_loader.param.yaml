@@ -10,4 +10,7 @@
     BorregasAve.osm:
       latitude: 37.416910205894
       longitude: -122.016032188409
+    soongsil_map_test.osm:
+      latitude: 0.0
+      longitude: 0.0
     
