@@ -13,4 +13,7 @@
     soongsil_map_test.osm:
       latitude: 0.0
       longitude: 0.0
+    kcity.osm:
+      latitude: 0.0
+      longitude: 0.0
     

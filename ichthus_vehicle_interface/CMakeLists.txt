@@ -17,21 +17,29 @@ if(NOT CMAKE_CXX_STANDARD)
 
 
 # find dependencies
-find_package(ament_cmake_auto REQUIRED)
-  ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 include_directories(include)
 
-ament_auto_add_library(ichthus_vehicle_interface SHARED
-  include/ichthus_vehicle_interface/ichthus_vehicle_interface.hpp
-  src/ichthus_vehicle_interface.cpp
+# ament_auto_add_library(ichthus_vehicle_interface_node SHARED
+#   include/ichthus_vehicle_interface/ichthus_vehicle_interface.hpp
+#   src/ichthus_vehicle_interface.cpp
+#   src/ichthus_vehicle_interface_node.cpp
+# )
+
+
+ament_auto_add_executable(ichthus_vehicle_interface_node
+src/ichthus_vehicle_interface.cpp
+src/ichthus_vehicle_interface_node.cpp
 )
 
-target_compile_options(ichthus_vehicle_interface PRIVATE -Wno-error=old-style-cast)
-rclcpp_components_register_node(ichthus_vehicle_interface
-  PLUGIN "ichthus_vehicle_interface::IchthusVehicleInterfaceNode"
-  EXECUTABLE ichthus_vehicle_interface_node
-)
+
+#target_compile_options(ichthus_vehicle_interface PRIVATE -Wno-error=old-style-cast)
+#rclcpp_components_register_node(ichthus_vehicle_interface
+#  PLUGIN "ichthus_vehicle_interface::IchthusVehicleInterfaceNode"
+#  EXECUTABLE ichthus_vehicle_interface_node
+#)
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
@@ -44,5 +52,6 @@ if(BUILD_TESTING)
 endif()
 
 ament_auto_package(INSTALL_TO_SHARE
+launch
 )
   

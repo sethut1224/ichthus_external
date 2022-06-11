@@ -7,7 +7,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.actions import OpaqueFunction
 # from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
-# from launch.conditions import UnlessCondition
+from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
 # from launch.substitutions import PathJoinSubstitution
 # from launch_ros.actions import ComposableNodeContainer
@@ -54,7 +54,27 @@ class System:
             ],
             output='screen'
         )
-        return [rviz2, urdf_publisher]
+
+        ichthus_vehicle_interface = Node(
+            package='ichthus_vehicle_interface',
+            executable='ichthus_vehicle_interface_node',
+            name='ichthus_vehicle_interface',
+            remappings=[
+                ('output/velocity_report', '/vehicle/status/velocity_status'),
+                ('output/steering_report', '/vehicle/status/steering_status'),
+                ('input/control_cmd', '/control/trajectory_follower/control_cmd')
+
+            ],
+            parameters=[
+                {
+                    'use_sim_time' : LaunchConfiguration('use_sim_time'),
+                    'use_raw_odom' : LaunchConfiguration('use_raw_odom')
+                }
+            ],
+            output='screen',
+            condition=UnlessCondition(LaunchConfiguration('lgsvl'))
+        )
+        return [rviz2, urdf_publisher, ichthus_vehicle_interface]
 
 
 def launch_setup(context, *args, **kwargs):
@@ -80,6 +100,8 @@ def generate_launch_description():
     add_launch_arg('urdf_file_path', urdf_file_path_default)
     add_launch_arg('rviz', 'true')
     add_launch_arg('use_sim_time', 'False')
+    add_launch_arg('use_raw_odom', 'False')
+    add_launch_arg('lgsvl', 'False')
 
     return launch.LaunchDescription(
         launch_arguments
@@ -87,7 +109,7 @@ def generate_launch_description():
         ExecuteProcess(
             cmd=[
                 "ros2","topic","pub", "/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/path_change_approval", "tier4_planning_msgs/msg/Approval", 
-                "{approval: true}", "-r", "10",
+                "{approval: true}", "-r", "1",
             ]
         ),
 

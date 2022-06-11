@@ -130,7 +130,7 @@ class Perception:
 
         return [image_transport_decompressor, tensorrt_yolo]
 
-    def lidar_detection(self, range_cropped_pointcloud, obstacle_segmentation_pointcloud, output_topic):
+    def lidar_detection(self, range_cropped_pointcloud, output_topic):
 
         lidar_centerpoint_param_path = LaunchConfiguration('lidar_centerpoint_param_path').perform(self.context)
         with open(lidar_centerpoint_param_path, "r") as f:
@@ -252,44 +252,6 @@ class Perception:
 
         return [lidar_centerpoint]
 
-    def occupancy_grid_map(self, no_ground_pointcloud, range_cropped_pointcloud, grid_map, obstacle_segmentation_pointcloud):
-
-        occupancy_grid_map = Node(
-            package="probabilistic_occupancy_grid_map",
-            executable="pointcloud_based_occupancy_grid_map_node",
-            name="occupancy_grid_map",
-            remappings=[
-                ("~/input/obstacle_pointcloud", no_ground_pointcloud),
-                ("~/input/raw_pointcloud", range_cropped_pointcloud),
-                ("~/output/occupancy_grid_map", grid_map),
-            ],
-            parameters=[
-                {
-                    "map_resolution": 0.5,
-                    "use_height_filter": False,
-                    'use_sim_time' : LaunchConfiguration('use_sim_time')
-                }
-            ],
-            output='screen'
-        )
-
-        occupancy_grid_map_outlier_filter = Node(
-            package="occupancy_grid_map_outlier_filter",
-            executable="occupancy_grid_map_outlier_filter_node",
-            name="occupancy_grid_map_outlier_filter",
-            remappings=[
-                ("~/input/occupancy_grid_map", grid_map),
-                ("~/input/pointcloud", no_ground_pointcloud),
-                ("~/output/pointcloud", obstacle_segmentation_pointcloud),
-            ],
-            parameters=[
-                {
-                    'use_sim_time' : LaunchConfiguration('use_sim_time')
-                }
-            ]
-        )
-
-        return [occupancy_grid_map, occupancy_grid_map_outlier_filter]
 
     def lidar_tracking(self, input_topic, output_topic):
 
@@ -357,9 +319,6 @@ def launch_setup(context, *args, **kwargs):
     nodes = list()
 
     range_cropped_pointcloud = LaunchConfiguration('range_cropped_pointcloud_topic').perform(context)
-    no_ground_pointcloud = LaunchConfiguration('no_ground_pointcloud_topic').perform(context)
-    grid_map = LaunchConfiguration('grid_map_topic').perform(context)
-    obstacle_segmentation_pointcloud = LaunchConfiguration('obstacle_segmentation_pointcloud_topic').perform(context)
     lidar_detected_objects_topic = LaunchConfiguration('lidar_detected_objects_topic').perform(context)
     tracked_objects_topic = LaunchConfiguration('tracked_objects_topic').perform(context)
     predicted_object_topic = LaunchConfiguration('predicted_objects_topic').perform(context)
@@ -367,10 +326,11 @@ def launch_setup(context, *args, **kwargs):
     raw_image_topic = LaunchConfiguration('raw_image_topic').perform(context)
     camera_detected_objects_topic = LaunchConfiguration('camera_detected_objects_topic').perform(context)
 
-    lidar_detection_nodes = pipeline.lidar_detection(range_cropped_pointcloud, obstacle_segmentation_pointcloud, lidar_detected_objects_topic)
+    lidar_detection_nodes = pipeline.lidar_detection(range_cropped_pointcloud, lidar_detected_objects_topic)
     lidar_tracking_nodes = pipeline.lidar_tracking(lidar_detected_objects_topic, tracked_objects_topic)
     lidar_prediction_nodes = pipeline.lidar_prediction(tracked_objects_topic, predicted_object_topic)
     camera_nodes = pipeline.camera(compressed_image_topic, raw_image_topic, camera_detected_objects_topic)
+
     nodes.extend(lidar_detection_nodes)
     nodes.extend(lidar_tracking_nodes)
     nodes.extend(lidar_prediction_nodes)
@@ -409,14 +369,11 @@ def generate_launch_description():
         get_package_share_directory('ichthus_launch'), 'param/map_based_prediction.param.yaml'
     )
 
-    add_launch_arg('range_cropped_pointcloud_topic', '/lidar_front/range_cropped_pointcloud')
+    add_launch_arg('range_cropped_pointcloud_topic', '/range_cropped_pointcloud')
     add_launch_arg('obstacle_segmentation_pointcloud_topic', '/perception/obstacle_segmentation/pointcloud')
     add_launch_arg('lidar_detected_objects_topic', '/lidar_front/detected_objects')
     add_launch_arg('tracked_objects_topic', '/perception/object_recognition/tracking/objects')
     add_launch_arg('predicted_objects_topic', '/perception/object_recognition/objects')
-    add_launch_arg('no_ground_pointcloud_topic', '/lidar_front/no_ground_pointcloud')
-    add_launch_arg('grid_map_topic', '/perception/occupancy_grid_map/map')
-
     add_launch_arg('compressed_image_topic', '/image/compressed')
     add_launch_arg('raw_image_topic', '/image_raw')
     add_launch_arg('compressed', 'true')
