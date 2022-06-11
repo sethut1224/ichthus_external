@@ -147,8 +147,8 @@ class Localization:
                 {
                     'use_sim_time' : LaunchConfiguration('use_sim_time'),
                     'resolution' : 3.0,
-                    'ndt_implement_type' : 2  # 0=PCL_GENERIC, 1=PCL_MODIFIED, 2=OMP
-                    'converged_param_type' : 1 # 0=TRANSFORM_PROBABILITY, 1=NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD
+                    'ndt_implement_type' : 2,  # 0=PCL_GENERIC, 1=PCL_MODIFIED, 2=OMP
+                    'converged_param_type' : 1, # 0=TRANSFORM_PROBABILITY, 1=NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD
                                             # NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD is only available when NDTImplementType::OMP is selected
                 }
             ],

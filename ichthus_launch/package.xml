@@ -9,39 +9,6 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <depend>autoware_cmake</depend>
-  <!-- <exec_depend>virtual_sensor_driver</exec_depend>
-  <exec_depend>point_cloud_filter_transform_nodes</exec_depend>
-  <exec_depend>point_cloud_fusion_nodes</exec_depend>
-  <exec_depend>voxel_grid_nodes</exec_depend>
-  <exec_depend>ray_ground_classifier_nodes</exec_depend>
-  <exec_depend>euclidean_cluster_nodes</exec_depend>
-  <exec_depend>ndt_nodes</exec_depend>
-  <exec_depend>lgsvl_interface</exec_depend>
-  <exec_depend>lanelet2_map_provider</exec_depend>
-  <exec_depend>lanelet2_map_visualizer</exec_depend>
-  <exec_depend>lanelet2_global_planner_nodes</exec_depend>
-  <exec_depend>initialpose_setter</exec_depend> -->
-  <!-- <exec_depend>lane_planner_nodes</exec_depend>
-  <exec_depend>freespace_planner_nodes</exec_depend> -->
-  <!-- <exec_depend>pure_pursuit_nodes</exec_depend>
-  <exec_depend>controller_common_nodes</exec_depend>
-  <exec_depend>dummy_node</exec_depend>
-  <exec_depend>behavior_planner_nodes</exec_depend> -->
-  <!-- <exec_depend>costmap_generator</exec_depend> -->
-  <!-- <exec_depend>lexus_rx_450h_description</exec_depend>
-  <exec_depend>object_collision_estimator_nodes</exec_depend>
-  <exec_depend>off_map_obstacles_filter_nodes</exec_depend>
-  <exec_depend>robot_state_publisher</exec_depend>
-  <exec_depend>trajectory_follower_nodes</exec_depend>
-  <exec_depend>tf2_ros</exec_depend>
-  <exec_depend>ekf_localizer</exec_depend> -->
-  <!-- <exec_depend>state_estimation_nodes</exec_depend> -->
-  <!-- <exec_depend>mpc_controller_nodes</exec_depend> -->
-  <!-- <exec_depend>covariance_insertion_nodes</exec_depend> -->
-  <!-- <exec_depend>ground_truth_detections</exec_depend>
-  <exec_depend>tracking_nodes</exec_depend>
-  <exec_depend>image_transport_decompressor</exec_depend>
-  <exec_depend>tensorrt_yolo</exec_depend> -->
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

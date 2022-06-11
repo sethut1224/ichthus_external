@@ -36,22 +36,6 @@ class LGSVL:
     
     def lgsvl(self):
 
-        # urdf_path = LaunchConfiguration('urdf_path').perform(self.context)
-        # with open(urdf_path, 'r') as infp:
-        #     urdf_file = infp.read()
-        
-        # urdf_publisher = Node(
-        #     package='robot_state_publisher',
-        #     executable='robot_state_publisher',
-        #     name='urdf_publisher',
-        #     parameters=[
-        #         {
-        #             'robot_description': urdf_file,
-        #             'use_sim_time' : LaunchConfiguration('use_sim_time')
-        #         }
-        #     ],
-        # )
-
         lgsv_interface_param_path = LaunchConfiguration('lgsvl_interface_param_path').perform(self.context)
         with open(lgsv_interface_param_path, 'r') as f:
             lgsv_interface_param = yaml.safe_load(f)["/**"]["ros__parameters"]
@@ -117,17 +101,12 @@ def generate_launch_description():
         get_package_share_directory('ichthus_launch'), 'param/vehicle_info.param.yaml'
     )
 
-    # urdf_path_default = os.path.join(
-    #     get_package_share_directory('ichthus_launch'), 'urdf/lexus_rx_450h.urdf'
-    # )
-
     lgsvl_interface_param_path_default = os.path.join(
         get_package_share_directory('ichthus_launch'), 'param/lgsvl_interface.param.yaml'
     )
 
     add_launch_arg('vehicle_info_param_path', vehicle_info_param_path_default)
     add_launch_arg('lgsvl_interface_param_path', lgsvl_interface_param_path_default)
-    # add_launch_arg('urdf_path', urdf_path_default)
     add_launch_arg('use_sim_time', 'False')
 
     return launch.LaunchDescription(
