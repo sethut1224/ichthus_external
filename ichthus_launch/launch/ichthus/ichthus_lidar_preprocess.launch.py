@@ -71,11 +71,11 @@ class Sensing:
                 {
                     "input_frame": 'base_link',
                     "output_frame": 'base_link',
-                    'min_x' : -60.0,
-                    'max_x' : 100.0,
+                    'min_x' : -70.0,
+                    'max_x' : 70.0,
                     'min_y' : -60.0,
                     'max_y' : 60.0,
-                    "min_z": -0.9,
+                    "min_z": -1.0,
                     "max_z": self.vehicle_info['max_height_offset'],
                     'max_queue_size' : 1,
                     'use_sim_time' : LaunchConfiguration('use_sim_time')

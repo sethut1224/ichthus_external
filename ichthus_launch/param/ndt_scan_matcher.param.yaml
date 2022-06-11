@@ -18,7 +18,7 @@
     step_size: 0.1
 
     # The ND voxel grid resolution
-    resolution: 2.0
+    resolution: 3.0
 
     # The number of iterations required to calculate alignment
     max_iterations: 30

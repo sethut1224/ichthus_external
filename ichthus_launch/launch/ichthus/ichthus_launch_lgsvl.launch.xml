@@ -9,6 +9,7 @@
     <arg name='control' default='true'/>
     
     <arg name='use_raw_odom' default='false' />
+    <arg name='use_camera' default='true' />
     <arg name='use_pointcloud_map' default='true'/>
     <arg name='use_lanelet2_map' default='true' />
     <arg name='lanelet2_map' default='$(find-pkg-share ichthus_launch)/map/BorregasAve.osm'/>
@@ -75,6 +76,7 @@
       <arg name='mode' value='INT8' />
       <arg name='model_name' value='default' />
       <arg name='use_sim_time' value='$(var use_sim_time)' />
+      <arg name='use_camera' value='$(var use_camera)' />
       <arg name='vehicle_info_param_path' value='$(var vehicle_info_param_path)' />
     </include>
 

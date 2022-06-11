@@ -88,7 +88,7 @@ class Perception:
                 ('~/input/compressed_image', compressed_image_topic),
                 ('~/output/raw_image', raw_image_topic)
             ],
-            condition=IfCondition(LaunchConfiguration('compressed'))
+            condition=IfCondition(LaunchConfiguration('compressed') and LaunchConfiguration('use_camera'))
         )
 
         tensorrt_yolo = Node(
@@ -111,6 +111,7 @@ class Perception:
                 ('in/image', raw_image_topic),
                 ('/out/objects', output_objects_topic)
             ],
+            condition=IfCondition(LaunchConfiguration('use_camera'))
         )
 
         detected_object_feature_remover = Node(
@@ -125,7 +126,8 @@ class Perception:
                 {
                     'use_sim_time' : LaunchConfiguration('use_sim_time')
                 }
-            ]
+            ],
+            condition=IfCondition(LaunchConfiguration('use_camera'))
         )
 
         return [image_transport_decompressor, tensorrt_yolo]
@@ -381,6 +383,7 @@ def generate_launch_description():
     add_launch_arg('yolo_type', 'yolov5m')
     add_launch_arg('mode', 'INT8')
 
+    add_launch_arg('use_camera', 'false')
     add_launch_arg('vehicle_info_param_path', vehicle_info_param_path_default),
     add_launch_arg('lidar_channel', "16")
     add_launch_arg('use_centerpoint', 'true')

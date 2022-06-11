@@ -145,7 +145,11 @@ class Localization:
             parameters=[
                 ndt_scan_matcher_param,
                 {
-                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                    'use_sim_time' : LaunchConfiguration('use_sim_time'),
+                    'resolution' : 3.0,
+                    'ndt_implement_type' : 2  # 0=PCL_GENERIC, 1=PCL_MODIFIED, 2=OMP
+                    'converged_param_type' : 1 # 0=TRANSFORM_PROBABILITY, 1=NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD
+                                            # NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD is only available when NDTImplementType::OMP is selected
                 }
             ],
 
@@ -171,7 +175,7 @@ class Localization:
                     'tf_rate' : 50.0,
                     'extend_state_step' : 50,
                     'pose_additional_delay' : 0.0,
-                    'pose_measure_uncertainty_time' : 0.01,
+                    'pose_measure_uncertainty_time' : 0.015,
                     'pose_rate' : 10.0,
                     'pose_gate_dist' : 100.0,
                     'twist_additional_delay' : 0.01,
