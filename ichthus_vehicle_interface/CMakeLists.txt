@@ -22,24 +22,17 @@ autoware_package()
 
 include_directories(include)
 
-# ament_auto_add_library(ichthus_vehicle_interface_node SHARED
-#   include/ichthus_vehicle_interface/ichthus_vehicle_interface.hpp
-#   src/ichthus_vehicle_interface.cpp
-#   src/ichthus_vehicle_interface_node.cpp
-# )
-
-
 ament_auto_add_executable(ichthus_vehicle_interface_node
 src/ichthus_vehicle_interface.cpp
 src/ichthus_vehicle_interface_node.cpp
 )
-
 
 #target_compile_options(ichthus_vehicle_interface PRIVATE -Wno-error=old-style-cast)
 #rclcpp_components_register_node(ichthus_vehicle_interface
 #  PLUGIN "ichthus_vehicle_interface::IchthusVehicleInterfaceNode"
 #  EXECUTABLE ichthus_vehicle_interface_node
 #)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights

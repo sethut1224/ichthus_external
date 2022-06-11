@@ -10,7 +10,7 @@
 
 // For control msg
 #include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
-#include "ichthus_can_msgs/msg/can.hpp"
+#include "ichthus_msgs/msg/can.hpp"
 
 using std::placeholders::_1;
 
@@ -48,7 +48,7 @@ namespace ichthus_vehicle_interface
             rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_mps;
 
             // rclcpp::Subscription
-            rclcpp::Subscription<ichthus_can_msgs::msg::Can>::SharedPtr sub_odom;
+            rclcpp::Subscription<ichthus_msgs::msg::Can>::SharedPtr sub_odom;
             rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr \
                 sub_ctrl_cmd;
 
@@ -74,7 +74,7 @@ namespace ichthus_vehicle_interface
             IchthusVehicleInterfaceNode();
 
             void ctrlCmdCB(const autoware_auto_control_msgs::msg::AckermannControlCommand::SharedPtr);
-            void odomCB(const ichthus_can_msgs::msg::Can::SharedPtr);
+            void odomCB(const ichthus_msgs::msg::Can::SharedPtr);
 
             void callback_ESP(const std_msgs::msg::Float64MultiArray::SharedPtr msg);
             void callback_SPD(const std_msgs::msg::Float64MultiArray::SharedPtr msg);

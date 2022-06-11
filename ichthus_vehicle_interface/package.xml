@@ -8,13 +8,14 @@
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-  
+
+  <depend>autoware_cmake</depend>
   <depend>rclcpp</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>autoware_auto_control_msgs</depend>
   <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>
-  <depend>ichthus_can_msgs</depend>
+  <depend>ichthus_msgs</depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

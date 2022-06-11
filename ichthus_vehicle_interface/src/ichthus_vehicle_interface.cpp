@@ -16,7 +16,7 @@ namespace ichthus_vehicle_interface
 
         sub_ctrl_cmd = this->create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>("/input/control_cmd", rclcpp::QoS{1}\
                             ,std::bind(&IchthusVehicleInterfaceNode::ctrlCmdCB, this, _1));
-        sub_odom = this->create_subscription<ichthus_can_msgs::msg::Can>("odom_raw",rclcpp::QoS{1}\
+        sub_odom = this->create_subscription<ichthus_msgs::msg::Can>("odom_raw",rclcpp::QoS{1}\
                             ,std::bind(&IchthusVehicleInterfaceNode::odomCB, this, _1));
         
         use_raw_odom = this->declare_parameter<bool>("use_raw_odom", false);
@@ -77,7 +77,7 @@ namespace ichthus_vehicle_interface
         pub_ref_ang->publish(ang);
     }
 
-    void IchthusVehicleInterfaceNode::odomCB(const ichthus_can_msgs::msg::Can::SharedPtr msg){
+    void IchthusVehicleInterfaceNode::odomCB(const ichthus_msgs::msg::Can::SharedPtr msg){
         auto velocity_report_msg = autoware_auto_vehicle_msgs::msg::VelocityReport::SharedPtr(
             new autoware_auto_vehicle_msgs::msg::VelocityReport);
         auto steering_report_msg = autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr(
