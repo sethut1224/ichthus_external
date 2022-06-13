@@ -134,7 +134,7 @@ class Map:
             ],
             condition=UnlessCondition(LaunchConfiguration('use_pointcloud_map'))
         )
-        ###only use when LGSVL Simulation without pointcloud map
+        ###only use when LGSVL Sanfrancisco Simulation without pointcloud map
         ###if Simulate only with lanelet2 map, fix the z value from the LGSVL 
         ###z is decide by the /lgsvl/gnss_odom z value
         ###if /lgsvl/gnss_odom x: 100, y:100, z:10.578049659729004, the z value of arguments is 10.578049659729004
