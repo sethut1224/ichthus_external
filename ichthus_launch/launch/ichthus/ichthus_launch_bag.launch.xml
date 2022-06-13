@@ -12,9 +12,11 @@
     <arg name='use_camera' default='false' />
     <arg name='use_multi_lidar' default='false'/>
     <arg name='use_pointcloud_map' default='true'/>
-    <arg name='use_lanelet2_map' default='true' />
+    <arg name='use_lanelet2_map' default='false' />
     <arg name='pointcloud_map' default='/root/shared_dir/map/kcity/kcity_vg0.2.pcd'/>
     <arg name='lanelet2_map' default='/root/shared_dir/map/kcity/kcity.osm'/>
+    <!-- <arg name='pointcloud_map' default='/root/shared_dir/map/soongsil/soongsil_vg0.2.pcd'/>
+    <arg name='lanelet2_map' default='/root/shared_dir/map/soongsil/soongsil.osm'/> -->
 
     <arg name='urdf_file_path' default="$(find-pkg-share ichthus_launch)/urdf/ichthus_NiroEV.urdf"/>
     <arg name='vehicle_info_param_path' default="$(find-pkg-share ichthus_launch)/param/ichthus_vehicle_info.param.yaml" />

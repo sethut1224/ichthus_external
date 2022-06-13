@@ -81,7 +81,12 @@ class Map:
         lanelet2_map_loader_param_path = LaunchConfiguration('lanelet2_map_loader_param_path').perform(self.context)
         with open(lanelet2_map_loader_param_path, 'r') as f:
             lanelet2_map_loader_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-        lanelet2_map_loader_param = lanelet2_map_loader_param[self.lanelet2_map_name]
+        
+        if lanelet2_map_loader_param.get(self.lanelet2_map_name) == None:
+            lanelet2_map_loader_param['latitude'] = 0.0
+            lanelet2_map_loader_param['longitude'] = 0.0
+        else:
+            lanelet2_map_loader_param = lanelet2_map_loader_param[self.lanelet2_map_name]
         
         lanelet2_map_loader = Node(
             package="map_loader",

@@ -4,6 +4,7 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /Map1/Lanelet2VectorMap1/Topic1
         - /Sensing1/LiDAR1/PointCloud1/Autocompute Value Bounds1
         - /Localization1/EKF1/PoseHistory1
         - /Perception1/GridMap1
@@ -107,7 +108,7 @@ Visualization Manager:
               Constant Color:
                 Color: 255; 255; 255
                 Value: true
-              Enabled: true
+              Enabled: false
               Name: VelocityHistory
               Scale: 0.30000001192092896
               Timeout: 10
@@ -117,8 +118,8 @@ Visualization Manager:
                 History Policy: Keep Last
                 Reliability Policy: Reliable
                 Value: /vehicle/status/velocity_status
-              Value: true
-            - Alpha: 0.30000001192092896
+              Value: false
+            - Alpha: 1
               Class: rviz_default_plugins/RobotModel
               Collision Enabled: false
               Description File: ""
@@ -141,11 +142,6 @@ Visualization Manager:
                   Show Axes: false
                   Show Trail: false
                   Value: true
-                camera:
-                  Alpha: 1
-                  Show Axes: false
-                  Show Trail: false
-                  Value: true
                 gnss:
                   Alpha: 1
                   Show Axes: false
@@ -164,10 +160,11 @@ Visualization Manager:
                   Show Axes: false
                   Show Trail: false
                   Value: true
-                nav_base:
+                velodyne:
                   Alpha: 1
                   Show Axes: false
                   Show Trail: false
+                  Value: true
               Name: VehicleModel
               TF Prefix: ""
               Update Interval: 0
@@ -203,7 +200,7 @@ Visualization Manager:
       Name: System
     - Class: rviz_common/Group
       Displays:
-        - Alpha: 0.20000000298023224
+        - Alpha: 0.10000000149011612
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
             Max Value: 28.71826171875
@@ -241,19 +238,7 @@ Visualization Manager:
           Enabled: true
           Name: Lanelet2VectorMap
           Namespaces:
-            center_lane_line: false
-            center_line_arrows: false
-            crosswalk_lanelets: true
-            lane_start_bound: false
-            lanelet direction: true
-            lanelet_id: false
-            left_lane_bound: true
-            right_lane_bound: true
-            road_lanelets: false
-            stop_lines: true
-            traffic_light: true
-            traffic_light_id: true
-            traffic_light_triangle: true
+            {}
           Topic:
             Depth: 5
             Durability Policy: Transient Local
@@ -267,7 +252,7 @@ Visualization Manager:
       Displays:
         - Class: rviz_common/Group
           Displays:
-            - Alpha: 0.4000000059604645
+            - Alpha: 0.6000000238418579
               Autocompute Intensity Bounds: true
               Autocompute Value Bounds:
                 Max Value: 5
@@ -282,15 +267,15 @@ Visualization Manager:
               Enabled: true
               Invert Rainbow: false
               Max Color: 255; 255; 255
-              Max Intensity: 3.5733110840282835e-43
+              Max Intensity: 65521
               Min Color: 0; 0; 0
-              Min Intensity: 0
+              Min Intensity: 24
               Name: PointCloud
               Position Transformer: XYZ
               Selectable: false
               Size (Pixels): 1.2000000476837158
-              Size (m): 0.019999999552965164
-              Style: Points
+              Size (m): 0.07999999821186066
+              Style: Flat Squares
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
@@ -425,12 +410,7 @@ Visualization Manager:
                 Color: 119; 11; 32
               Name: PredictedObjects
               Namespaces:
-                label: true
-                path: true
-                path confidence: true
-                shape: true
-                uuid: true
-                velocity: true
+                {}
               PEDESTRIAN:
                 Alpha: 0.9990000128746033
                 Color: 255; 192; 203
@@ -517,12 +497,7 @@ Visualization Manager:
               Enabled: true
               Name: RouteArea
               Namespaces:
-                end_lanelets: true
-                goal_lanelets: true
-                lane_start_bound: true
-                left_lane_bound: true
-                right_lane_bound: true
-                route_lanelets: true
+                {}
               Topic:
                 Depth: 5
                 Durability Policy: Transient Local
@@ -1059,8 +1034,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        slow_down_factor_text: true
-        slow_down_virtual_wall: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -1072,11 +1046,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        collision_points: true
-        detection_polygons: true
-        intentionally_ignored_obstacles: true
-        obstacles_to_cruise: true
-        obstacles_to_stop: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -1088,8 +1058,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        stop_factor_text: true
-        stop_virtual_wall: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -1149,7 +1118,7 @@ Visualization Manager:
   Global Options:
     Background Color: 10; 10; 10
     Fixed Frame: map
-    Frame Rate: 30
+    Frame Rate: 15
   Name: root
   Tools:
     - Class: rviz_default_plugins/Interact
@@ -1214,7 +1183,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/ThirdPersonFollower
-      Distance: 216.37062072753906
+      Distance: 115.42118072509766
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -1229,10 +1198,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5597963333129883
+      Pitch: 1.5297963619232178
       Target Frame: base_link
       Value: ThirdPersonFollower (rviz_default_plugins)
-      Yaw: 3.6473915576934814
+      Yaw: 3.29239559173584
     Saved:
       - Class: rviz_default_plugins/ThirdPersonFollower
         Distance: 18
