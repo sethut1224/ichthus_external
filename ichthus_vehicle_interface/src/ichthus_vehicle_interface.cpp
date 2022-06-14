@@ -14,6 +14,9 @@ namespace ichthus_vehicle_interface
         pub_yaw = this->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("can_odom", 1);
         pub_mps = this->create_publisher<std_msgs::msg::Float64>("can_mps", 1);
 
+        pub_cur_ang = this->create_publisher<std_msgs::msg::Float64>("cur_ang", 1);
+        pub_cur_vel = this->create_publisher<std_msgs::msg::Float64>("cur_vel", 1);
+
         sub_ctrl_cmd = this->create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>("/input/control_cmd", rclcpp::QoS{1}\
                             ,std::bind(&IchthusVehicleInterfaceNode::ctrlCmdCB, this, _1));
         sub_odom = this->create_subscription<ichthus_msgs::msg::Can>("odom_raw",rclcpp::QoS{1}\
@@ -86,6 +89,11 @@ namespace ichthus_vehicle_interface
             new geometry_msgs::msg::TwistWithCovarianceStamped);
         auto velocity_mps_msg = std_msgs::msg::Float64::SharedPtr(
             new std_msgs::msg::Float64);
+        auto cur_vel_msg = std_msgs::msg::Float64::SharedPtr(
+            new std_msgs::msg::Float64);
+
+        auto cur_ang_msg = std_msgs::msg::Float64::SharedPtr(
+            new std_msgs::msg::Float64);
 
 
         for(size_t i = 0; i < msg->can_data.size(); i++)
@@ -94,12 +102,10 @@ namespace ichthus_vehicle_interface
             {
                 steer_wheel_angle = msg->can_data[i];
             }
-
             else if(msg->can_names[i] == "CUR_VEL")
             {
                 cur_velocity = msg->can_data[i];
             }
-
             else if(msg->can_names[i] == "YAW_RATE")
             {
                 yaw_rate = msg->can_data[i];
@@ -134,5 +140,10 @@ namespace ichthus_vehicle_interface
         pub_steering_report_->publish(*steering_report_msg);
         pub_yaw->publish(*twist_covariance_msg);
         pub_mps->publish(*velocity_mps_msg);
+
+        cur_vel_msg->data = cur_velocity;
+        cur_ang_msg->data = steer_wheel_angle;
+        pub_cur_vel->publish(*cur_vel_msg);
+        pub_cur_ang->publish(*cur_ang_msg);
     }
 } // namespace ichthus_vehicle_interface

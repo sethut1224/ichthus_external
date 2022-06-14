@@ -43,6 +43,10 @@ namespace ichthus_vehicle_interface
             rclcpp::Publisher <std_msgs::msg::Float64>::SharedPtr pub_ref_vel;
             rclcpp::Publisher <std_msgs::msg::Float64>::SharedPtr pub_ref_ang;
 
+
+            rclcpp::Publisher <std_msgs::msg::Float64>::SharedPtr pub_cur_vel;
+            rclcpp::Publisher <std_msgs::msg::Float64>::SharedPtr pub_cur_ang;
+
             rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr \
                 pub_yaw;
             rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_mps;

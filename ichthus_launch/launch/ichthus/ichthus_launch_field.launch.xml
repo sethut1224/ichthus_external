@@ -1,13 +1,13 @@
 <launch>
-    <arg name="map" default="true"/>
+    <arg name="map" default="false"/>
     <arg name="system" default="true"/>
     <arg name="sensing" default="true"/>
-    <arg name='localization' default='true'/>
-    <arg name="perception" default="true"/>
-    <arg name="planning" default="true"/>
-    <arg name='control' default='true'/>
+    <arg name='localization' default='false'/>
+    <arg name="perception" default="false"/>
+    <arg name="planning" default="false"/>
+    <arg name='control' default='false'/>
     
-    <arg name='use_raw_odom' default='true' />
+    <arg name='use_raw_odom' default='false' />
     <arg name='use_imu' default='false'/>
     <arg name='use_camera' default='false' />
     <arg name='use_multi_lidar' default='false'/>
