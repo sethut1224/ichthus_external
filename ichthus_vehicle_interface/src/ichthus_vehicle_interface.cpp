@@ -16,6 +16,7 @@ namespace ichthus_vehicle_interface
 
         pub_cur_ang = this->create_publisher<std_msgs::msg::Float64>("cur_ang", 1);
         pub_cur_vel = this->create_publisher<std_msgs::msg::Float64>("cur_vel", 1);
+        pub_v2x = this->create_publisher<std_msgs::msg::Float64MultiArray>("v2x", 1);
 
         sub_ctrl_cmd = this->create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>("/input/control_cmd", rclcpp::QoS{1}\
                             ,std::bind(&IchthusVehicleInterfaceNode::ctrlCmdCB, this, _1));
@@ -91,7 +92,9 @@ namespace ichthus_vehicle_interface
             new std_msgs::msg::Float64);
         auto cur_vel_msg = std_msgs::msg::Float64::SharedPtr(
             new std_msgs::msg::Float64);
-
+        auto v2x_msg = std_msgs::msg::Float64MultiArray::SharedPtr(
+            new std_msgs::msg::Float64MultiArray);
+        
         auto cur_ang_msg = std_msgs::msg::Float64::SharedPtr(
             new std_msgs::msg::Float64);
 
@@ -109,6 +112,10 @@ namespace ichthus_vehicle_interface
             else if(msg->can_names[i] == "YAW_RATE")
             {
                 yaw_rate = msg->can_data[i];
+            }
+            else if(msg->can_names[i] == "GEAR")
+            {
+                cur_gear = msg->can_data[i];
             }
         }
         
@@ -145,5 +152,10 @@ namespace ichthus_vehicle_interface
         cur_ang_msg->data = steer_wheel_angle;
         pub_cur_vel->publish(*cur_vel_msg);
         pub_cur_ang->publish(*cur_ang_msg);
+
+        v2x_msg->data.push_back(KMPHtoMPS(cur_velocity));
+        v2x_msg->data.push_back(cur_gear);
+        pub_v2x->publish(*v2x_msg);
+
     }
 } // namespace ichthus_vehicle_interface

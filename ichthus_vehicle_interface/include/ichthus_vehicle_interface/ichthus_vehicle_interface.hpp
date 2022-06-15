@@ -51,6 +51,8 @@ namespace ichthus_vehicle_interface
                 pub_yaw;
             rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_mps;
 
+            rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_v2x;
+
             // rclcpp::Subscription
             rclcpp::Subscription<ichthus_msgs::msg::Can>::SharedPtr sub_odom;
             rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr \
@@ -68,7 +70,7 @@ namespace ichthus_vehicle_interface
             //float lon_acc;
             //float lat_acc;
             float yaw_rate;
-            //float cur_gear;
+            float cur_gear;
 
             double temp_yaw_rate;
             double temp_cur_vel;
