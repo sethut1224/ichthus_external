@@ -160,7 +160,7 @@ class Perception:
                     'use_sim_time' : LaunchConfiguration('use_sim_time')
                 }
             ],
-            condition = IfCondition(LaunchConfiguration('use_centerpoint'))
+            condition = UnlessCondition(LaunchConfiguration('use_fake_objects'))
         )
 
         # lidar_apollo_instance_segmentation_param_path = LaunchConfiguration('lidar_apollo_instance_segmentation_param_path').perform(self.context)
@@ -315,6 +315,36 @@ class Perception:
 
         return [map_based_prediction]
 
+    def fake_object_generator(self, output_topic):
+
+        fake_object_publisher_param_path = LaunchConfiguration('fake_object_publisher_param_path').perform(self.context)
+        with open(fake_object_publisher_param_path, "r") as f:
+            fake_object_publisher_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+        fake_object_publisher = Node(
+            package='fake_object_publisher',
+            executable='fake_object_publisher_node',
+            name='fake_object_publisher',
+
+            remappings=[
+                ('/input/object', '/simulation/dummy_perception_publisher/object_info'),
+                ('/output/fake_objects', output_topic)
+            ],
+
+            parameters=[
+                fake_object_publisher_param,
+                {
+                    'visible_range' : 300.0,
+                    'real' : False,
+                    'use_object_recognition' : True,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                }
+            ],
+            output='screen',
+            condition=IfCondition(LaunchConfiguration('use_fake_objects'))
+        )
+        return [fake_object_publisher]
+
 def launch_setup(context, *args, **kwargs):
     pipeline = Perception(context)
 
@@ -329,15 +359,17 @@ def launch_setup(context, *args, **kwargs):
     camera_detected_objects_topic = LaunchConfiguration('camera_detected_objects_topic').perform(context)
 
     lidar_detection_nodes = pipeline.lidar_detection(range_cropped_pointcloud, lidar_detected_objects_topic)
+    fake_object_nodes = pipeline.fake_object_generator(lidar_detected_objects_topic)
     lidar_tracking_nodes = pipeline.lidar_tracking(lidar_detected_objects_topic, tracked_objects_topic)
     lidar_prediction_nodes = pipeline.lidar_prediction(tracked_objects_topic, predicted_object_topic)
     camera_nodes = pipeline.camera(compressed_image_topic, raw_image_topic, camera_detected_objects_topic)
-
+    
     nodes.extend(lidar_detection_nodes)
     nodes.extend(lidar_tracking_nodes)
     nodes.extend(lidar_prediction_nodes)
     nodes.extend(camera_nodes)
-
+    nodes.extend(fake_object_nodes)
+    
     return nodes
 
 def generate_launch_description():
@@ -353,6 +385,10 @@ def generate_launch_description():
 
     lidar_centerpoint_param_path_default = os.path.join(
             get_package_share_directory('ichthus_launch'), 'param/lidar_centerpoint.param.yaml'
+    )
+
+    fake_object_publisher_param_path_default = os.path.join(
+            get_package_share_directory('ichthus_launch'), 'param/fake_object_publisher.param.yaml'
     )
 
     lidar_apollo_instance_segmentation_param_path_default = os.path.join(
@@ -390,12 +426,13 @@ def generate_launch_description():
     add_launch_arg('use_apollo', 'false')
     add_launch_arg('model_name', 'default')
     add_launch_arg('lidar_centerpoint_param_path', lidar_centerpoint_param_path_default)
+    add_launch_arg('fake_object_publisher_param_path', fake_object_publisher_param_path_default)
     add_launch_arg('lidar_apollo_instance_segmentation_param_path', lidar_apollo_instance_segmentation_param_path_default)
     
     add_launch_arg('tracker_setting_param_path', tracker_setting_param_path_default)
     add_launch_arg('data_association_matrix_param_path', data_association_matrix_param_path_default)
     add_launch_arg('map_based_prediction_param_path', map_based_prediction_param_path_default)
-    
+    add_launch_arg('use_fake_objects', 'False')
     add_launch_arg('use_sim_time', 'False')
 
     return launch.LaunchDescription(

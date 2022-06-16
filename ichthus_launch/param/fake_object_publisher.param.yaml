@@ -1,0 +1,5 @@
+/**:
+  ros__parameters:
+    visible_range: 300.0,
+    real: False,
+    use_object_recognition: True,

@@ -12,6 +12,7 @@
     <arg name='use_camera' default='true' />
     <arg name='use_pointcloud_map' default='true'/>
     <arg name='use_lanelet2_map' default='true' />
+    <arg name='use_fake_objects' default='false' />
     <arg name='lanelet2_map' default='$(find-pkg-share ichthus_launch)/map/BorregasAve.osm'/>
     <arg name='pointcloud_map' default='$(find-pkg-share ichthus_launch)/map/BorregasAve.pcd'/>
     <arg name='yolo_type' default='yolov5m'/>
@@ -23,6 +24,7 @@
     <arg name='detection_raw_pointcloud_topic' default='/merged_cloud' />
     <arg name='localization_raw_pointcloud_topic' default='/lidar_front/points_raw' />
     <arg name='kinematic_state' default='/lgsvl/gnss_odom' />
+    
     <arg name='use_sim_time' default='true' />
     <arg name='projector_type' default='UTM' />
 
