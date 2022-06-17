@@ -61,14 +61,44 @@ class Sensing:
         )
 
         return [imu_corrector]
+    
+    def gnss(self):
+        g2m_poser = Node(
+            package='g2m_poser',
+            executable='g2m_poser_exe',
+            name='g2m_poser',
+            parameters =[
+                {
+                    'use_sim_time' : LaunchConfiguration('use_sim_time'),
+                    'use_tf_publish': LaunchConfiguration('use_tf_publish'),
+                    'target_frame_id': LaunchConfiguration('target_frame_id'),
+                    'origin_x': LaunchConfiguration('origin_x'),
+                    'origin_y': LaunchConfiguration('origin_y'),
+                    'origin_z': LaunchConfiguration('origin_z'),
+                    'heading_source': LaunchConfiguration('heading_source'),
+                    'pose_diff_for_heading': LaunchConfiguration('pose_diff_for_heading'),
+                    'fix_topic': LaunchConfiguration('fix_topic'),
+                    'imu_topic': LaunchConfiguration('imu_topic'),
+                    'odom_topic': LaunchConfiguration('odom_topic'),
+                    'pose_topic': LaunchConfiguration('pose_topic'),
+                    'pose_cov_topic': LaunchConfiguration('pose_cov_topic'),
+                },
+            ],
+            condition=IfCondition(LaunchConfiguration('use_gnss'))
+        )
+
+        return [g2m_poser]
 
 def launch_setup(context, *args, **kwargs):
     pipeline = Sensing(context)
 
     nodes = []
+
     imu_nodes = pipeline.imu()
+    gnss_nodes = pipeline.gnss()
 
     nodes.extend(imu_nodes)
+    nodes.extend(gnss_nodes)
 
     return nodes
 
@@ -91,6 +121,28 @@ def generate_launch_description():
     add_launch_arg('use_sim_time', 'False')
     add_launch_arg('imu_corrector_param_path', imu_corrector_param_path_default)
     add_launch_arg('use_imu', 'False')
+
+    ############
+    ### gnss ###
+    ############
+    add_launch_arg("use_tf_publish", "false")
+    add_launch_arg("target_frame_id", "gnss")
+
+    ### origin of city ###
+    add_launch_arg("origin_x", "'445815.539508'")
+    add_launch_arg("origin_y", "'3944953.128090'")
+    add_launch_arg("origin_z", "'48.640911'")
+    ######################
+    
+    add_launch_arg("heading_source", "NONE") # NONE, IMU, ODOM
+    add_launch_arg("pose_diff_for_heading", "0.4")
+    add_launch_arg("fix_topic", "/fix")
+    add_launch_arg("imu_topic", "/imu/data")
+    add_launch_arg("odom_topic", "/output/velocity_report")
+    add_launch_arg("pose_topic", "/gnss_pose")
+    add_launch_arg("pose_cov_topic", "/gnss_pose_cov")
+    add_launch_arg("use_gnss", "true")
+    
 
     return launch.LaunchDescription(
         launch_arguments

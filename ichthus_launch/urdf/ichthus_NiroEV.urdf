@@ -59,7 +59,7 @@
   <joint name="gnss_joint" type="fixed">
     <parent link="base_link"/>
     <child link="gnss"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0.359 0 1.348" rpy="0 0 0"/>
   </joint>
 
   <link name="lidar_front">

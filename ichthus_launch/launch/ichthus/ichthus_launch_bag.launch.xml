@@ -9,15 +9,21 @@
     
     <arg name='use_raw_odom' default='true' />
     <arg name='use_imu' default='false'/>
+    <arg name='use_gnss' default='true'/>
     <arg name='use_camera' default='false' />
     <arg name='use_multi_lidar' default='false'/>
     <arg name='use_pointcloud_map' default='true'/>
-    <arg name='use_lanelet2_map' default='true' />
-    <arg name='use_fake_objects' default='true' />
+    <arg name='use_lanelet2_map' default='false' />
+    <arg name='use_fake_objects' default='false' />
     <!-- <arg name='pointcloud_map' default='/root/shared_dir/map/kcity/kcity_vg0.2.pcd'/>
     <arg name='lanelet2_map' default='/root/shared_dir/map/kcity/kcity.osm'/> -->
-    <arg name='pointcloud_map' default='/root/shared_dir/map/kiapi_test/pointcloud_map.pcd'/>
+    
+    <!-- <arg name='pointcloud_map' default='/root/shared_dir/map/kiapi/highway_vg0.1.pcd'/>
+    <arg name='lanelet2_map' default='/root/shared_dir/map/kiapi_test/lanelet2_map.osm'/> -->
+    
+    <arg name='pointcloud_map' default='/root/shared_dir/map/kiapi/highway_vg0.1.pcd'/>
     <arg name='lanelet2_map' default='/root/shared_dir/map/kiapi_test/lanelet2_map.osm'/>
+    
     <!-- <arg name='pointcloud_map' default='/root/shared_dir/map/soongsil/soongsil_vg0.2.pcd'/>
     <arg name='lanelet2_map' default='/root/shared_dir/map/soongsil/soongsil.osm'/> -->
 
@@ -53,6 +59,7 @@
       <arg name='use_sim_time' value='$(var use_sim_time)' />
       <arg name='vehicle_info_param_path' value='$(var vehicle_info_param_path)' />
       <arg name='use_imu' value='$(var use_imu)' />
+      <arg name='use_gnss' value='$(var use_gnss)' />
     </include>
 
     <include file='$(find-pkg-share ichthus_launch)/launch/ichthus/ichthus_lidar_preprocess.launch.py' if='$(var sensing)'>

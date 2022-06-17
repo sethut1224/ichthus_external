@@ -1,0 +1,9 @@
+<library path="ichthus_command_rviz_plugin">
+
+  <class
+    type="rviz_plugins::IchthusCommandPanel"
+    base_class_type="rviz_common::Panel">
+    <description>IchthusCommandPanel</description>
+  </class>
+
+</library>
