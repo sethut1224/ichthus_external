@@ -64,6 +64,10 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
+install(DIRECTORY
+launch
+DESTINATION share/${PROJECT_NAME})
+
 ################################################################################
 # Find and load build settings from external packages
 ################################################################################

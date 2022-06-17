@@ -12,6 +12,8 @@
     <arg name='use_gnss' default='true'/>
     <arg name='use_camera' default='false' />
     <arg name='use_multi_lidar' default='false'/>
+    <arg name='use_v2x' default='true' />
+
     <arg name='use_pointcloud_map' default='true'/>
     <arg name='use_lanelet2_map' default='true' />
     <arg name='use_fake_objects' default='true' />
@@ -25,8 +27,6 @@
     <arg name='pointcloud_map' default='/root/shared_dir/map/kiapi/city_vg0.1.pcd'/>
     <arg name='lanelet2_map' default='/root/shared_dir/map/kiapi/city_latest.osm'/>
 
-    
-
     <arg name='urdf_file_path' default="$(find-pkg-share ichthus_launch)/urdf/ichthus_NiroEV.urdf"/>
     <arg name='vehicle_info_param_path' default="$(find-pkg-share ichthus_launch)/param/ichthus_vehicle_info.param.yaml" />
 
@@ -39,7 +39,10 @@
     
     <arg name='use_sim_time' default='false' />
 
-    <include file='$(find-pkg-share ichthus_lidar_driver_ros2)/launch/ichthus_lidar_driver_ros2.launch.py' />
+    <include file='$(find-pkg-share ichthus_lidar_driver_ros2)/launch/ichthus_lidar_driver_ros2.launch.py'>
+      <arg name='setup_type' value='CENTER'/>
+    </include>
+    <include file='$(find-pkg-share ichthus_v2x)/launch/ichthus_v2x.launch.py' />
 
     <include file="$(find-pkg-share ichthus_launch)/launch/ichthus/ichthus_map.launch.py" if='$(var map)'>
       <arg name='use_sim_time' value='$(var use_sim_time)' />

@@ -7,7 +7,7 @@ namespace ichthus_v2x
 bool done = false;
 bool is_first_topic = true;
 
-IchthusV2X::IchthusV2X() : Node("ichthus_v2x") 
+IchthusV2X::IchthusV2X() : Node("ichthus_v2x")
 {
   auto qos_profile = rclcpp::QoS(rclcpp::KeepLast(10));
   v2x_pub_ = this->create_publisher<kiapi_msgs::msg::V2xinfo>("v2x_info", qos_profile);
@@ -20,6 +20,9 @@ IchthusV2X::IchthusV2X() : Node("ichthus_v2x")
               std::bind(&IchthusV2X::ImuCallback, this, std::placeholders::_1));
   vel_sub_ = this->create_subscription<std_msgs::msg::Float64MultiArray>("/v2x", qos_profile,
               std::bind(&IchthusV2X::VelocityCallback, this, std::placeholders::_1));
+  
+  IP = this->declare_parameter("ip", "192.168.10.10");
+  std::cout<<"IP : "<<IP<<std::endl;
 }
 IchthusV2X::~IchthusV2X()
 {

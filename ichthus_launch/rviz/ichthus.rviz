@@ -5,8 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /System1/Vehicle1
-        - /Map1/Lanelet2VectorMap1
-        - /Map1/Lanelet2VectorMap1/Namespaces1
+        - /Map1/PointCloudMap1
         - /Sensing1/LiDAR1/PointCloud1/Autocompute Value Bounds1
         - /Localization1/EKF1
         - /Localization1/PoseHistory1
@@ -244,7 +243,14 @@ Visualization Manager:
           Enabled: true
           Name: Lanelet2VectorMap
           Namespaces:
-            {}
+            center_lane_line: false
+            center_line_arrows: true
+            lane_start_bound: false
+            lanelet direction: true
+            lanelet_id: false
+            left_lane_bound: true
+            right_lane_bound: true
+            road_lanelets: false
           Topic:
             Depth: 5
             Durability Policy: Transient Local
@@ -1215,7 +1221,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 11.920400619506836
+      Scale: -14.633460998535156
       Target Frame: base_link
       Value: TopDownOrtho (rviz)
       X: 0

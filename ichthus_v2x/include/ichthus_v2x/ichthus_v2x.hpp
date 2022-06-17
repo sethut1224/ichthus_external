@@ -34,7 +34,7 @@
 #define PVD_INTERVAL 200 //msec
 
 /* =============CHANGE IP & PORT============== */
-#define IP "127.0.0.1" // OBU = "192.168.10.10 테스트서버 - "118.45.183.36", 레코딩서버 - "127.0.0.1"
+// #define IP "127.0.0.1" // OBU = "192.168.10.10 테스트서버 - "118.45.183.36", 레코딩서버 - "127.0.0.1"
 #define PORT 23000 // 레코딩옛날 - 15130, 레코딩지금 - 23000
 /* =========================================== */
 
@@ -143,7 +143,7 @@ private:
   uint8_t packetSeq = 0; //TCP 전송 Header 내 Sequence Number 값 
   unsigned char clientDeviceId[3] = {0x01,0x02,0x03}; //TCP 전송 Header 내 Device ID
   unsigned char temporaryId[4] = {0x00,0x01,0x02,0x03}; //BSM, PVD 전송 시 메시지 내 Temporary ID
-
+  std::string IP;
 };
 
 }
