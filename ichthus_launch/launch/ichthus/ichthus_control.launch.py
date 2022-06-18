@@ -68,8 +68,29 @@ class Control:
                 lat_controller_param,
                 self.vehicle_info,
                 {
-                'use_sim_time' : LaunchConfiguration('use_sim_time')
+                'use_sim_time' : LaunchConfiguration('use_sim_time'),
+                'input_delay' : 0.01,
+                'steer_lim_deg' : 35.0,
                 }
+            ],
+        )   
+
+        pure_pursuit_param_path = LaunchConfiguration("pure_pursuit_param_path").perform(self.context)
+        with open(pure_pursuit_param_path, "r") as f:
+            pure_pursuit_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+        pure_pursuit = Node(
+            package="pure_pursuit",
+            executable="pure_pursuit_node_exe",
+            name="pure_pursuit_node",
+            remappings=[
+                ("input/reference_trajectory", "/planning/scenario_planning/trajectory"),
+                ("input/current_odometry", self.kinematic_state),
+                ("output/control_raw", "lateral/control_cmd"),
+            ],
+            parameters=[
+                self.vehicle_info,
+                pure_pursuit_param
             ],
         )
 
@@ -90,6 +111,7 @@ class Control:
                 {
                     "show_debug_info": True,
                     "enable_pub_debug": True,
+                    'delay_compensation_time' : 0.01,
                     'use_sim_time' : LaunchConfiguration('use_sim_time')
                 },
             ],
@@ -154,12 +176,14 @@ class Control:
                     "use_emergency_handling": False,
                     "use_external_emergency_stop": True,
                     "use_start_request": False,
-                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                    'use_sim_time' : LaunchConfiguration('use_sim_time'),
+                    'vel_lim' : 50.0
                 },
             ],
         )
 
         return [lat_controller, lon_controller, latlon_muxer, vehicle_cmd_gate]
+        # return [pure_pursuit, lon_controller, latlon_muxer, vehicle_cmd_gate]
 
 def launch_setup(context, *args, **kwargs):
     pipeline = Control(context)
@@ -197,6 +221,10 @@ def generate_launch_description():
         get_package_share_directory('ichthus_launch'), 'param/vehicle_cmd_gate.param.yaml'
     )
 
+    pure_pursuit_param_path_default = os.path.join(
+        get_package_share_directory('ichthus_launch'), 'param/pure_pursuit.param.yaml'
+    )
+
     add_launch_arg('vehicle_info_param_path', vehicle_info_param_path_default),
     add_launch_arg('use_sim_time', 'False')
 
@@ -204,6 +232,7 @@ def generate_launch_description():
     add_launch_arg('lon_controller_param_path', lon_controller_param_path_default)
     add_launch_arg('latlon_muxer_param_path', latlon_muxer_param_path_default)
     add_launch_arg('vehicle_cmd_gate_param_path', vehicle_cmd_gate_param_path_default)
+    add_launch_arg('pure_pursuit_param_path' , pure_pursuit_param_path_default)
 
     add_launch_arg('use_sim_time', 'False')
     add_launch_arg('kinematic_state', 'lgsvl/gnss_odom')

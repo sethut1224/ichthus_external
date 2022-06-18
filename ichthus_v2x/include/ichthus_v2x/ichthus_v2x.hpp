@@ -22,6 +22,7 @@
 #include "std_msgs/msg/float64_multi_array.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/nav_sat_fix.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
 #include "kiapi_msgs/msg/v2xinfo.hpp"
 #include "kiapi_msgs/msg/pvdinfo.hpp"    // TEST VER.
 #include "kiapi_msgs/msg/mylocation.hpp" // TEST VER.
@@ -89,9 +90,10 @@ public:
   virtual ~IchthusV2X(); //소멸자를 가상함수로 선언하지 않으면 자식 클래스의 소멸자는 호출되지 않음 
 
   // void LocationCallback(const kiapi_msgs::msg::Mylocation::SharedPtr msg);
-  void ImuCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
+  // void ImuCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
   void GnssCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg);
   void VelocityCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg);
+  void GnssPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
 
   void sendPvd();
   void receiveSpat();
@@ -122,6 +124,7 @@ private:
   // rclcpp::Subscription<kiapi_msgs::msg::Mylocation>::SharedPtr loc_sub_;   //GNSS 정보 서브스크라이브(test)
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr ori_sub_;            //IMU 정보 서브스크라이브
   rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr vel_sub_; //IMU 정보 서브스크라이브
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr gnss_pose_sub_; //IMU 정보 서브스크라이브
   
   kiapi_msgs::msg::V2xinfo v2x_msg; //V2x_info.msg
   kiapi_msgs::msg::Pvdinfo pvd_msg; //Pvd_info.msg

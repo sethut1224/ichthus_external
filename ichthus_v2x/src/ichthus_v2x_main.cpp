@@ -16,11 +16,19 @@ IchthusV2X::IchthusV2X() : Node("ichthus_v2x")
               // std::bind(&IchthusV2X::LocationCallback, this, std::placeholders::_1));   /* for test */
   loc_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>("/fix", qos_profile,
               std::bind(&IchthusV2X::GnssCallback, this, std::placeholders::_1));
-  ori_sub_ = this->create_subscription<sensor_msgs::msg::Imu>("/imu/data", qos_profile,
-              std::bind(&IchthusV2X::ImuCallback, this, std::placeholders::_1));
+  // ori_sub_ = this->create_subscription<sensor_msgs::msg::Imu>("/imu/data", qos_profile,
+  //             std::bind(&IchthusV2X::ImuCallback, this, std::placeholders::_1));
   vel_sub_ = this->create_subscription<std_msgs::msg::Float64MultiArray>("/v2x", qos_profile,
               std::bind(&IchthusV2X::VelocityCallback, this, std::placeholders::_1));
-  
+  gnss_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("/gnss_pose", 
+              rclcpp::SensorDataQoS().keep_last(64),
+              std::bind(&IchthusV2X::GnssPoseCallback, this, std::placeholders::_1));
+
+
+  // this->create_subscription<sensor_msgs::msg::NavSatFix>(
+  //   this->declare_parameter("fix_topic", "/fix"), 
+  //   rclcpp::SensorDataQoS().keep_last(64),
+  //   std::bind(&G2MPoser::callbackFix, this, std::placeholders::_1));
   IP = this->declare_parameter("ip", "192.168.10.10");
   std::cout<<"IP : "<<IP<<std::endl;
 }
@@ -59,13 +67,23 @@ void IchthusV2X::GnssCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg)
   }
 }
 
-void IchthusV2X::ImuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
+// void IchthusV2X::ImuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
+// {
+//   // std::cout << "callback" << std::endl;
+//   double siny_cosp = 2.0 * (msg->orientation.w * msg->orientation.z + msg->orientation.x * msg->orientation.y);
+//   double cosy_cosp = 1.0 - 2.0 * (msg->orientation.y * msg->orientation.y + msg->orientation.z * msg->orientation.z);
+//   Vli_.heading = std::atan2(siny_cosp, cosy_cosp) * (180.0 / M_PI);
+// }
+
+void IchthusV2X::GnssPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
 {
   // std::cout << "callback" << std::endl;
-  double siny_cosp = 2 * (msg->orientation.w * msg->orientation.z + msg->orientation.x * msg->orientation.y);
-  double cosy_cosp = 1 - 2 * (msg->orientation.y * msg->orientation.y + msg->orientation.z * msg->orientation.z);
-  Vli_.heading = std::atan2(siny_cosp, cosy_cosp);
+  double siny_cosp = 2.0 * (msg->pose.orientation.w * msg->pose.orientation.z + msg->pose.orientation.x * msg->pose.orientation.y);
+  double cosy_cosp = 1.0 - 2.0 * (msg->pose.orientation.y * msg->pose.orientation.y + msg->pose.orientation.z * msg->pose.orientation.z);
+  // Vli_.heading = std::atan2(siny_cosp, cosy_cosp) * (180.0 / M_PI);
+  Vli_.heading = static_cast<double>(static_cast<int>((-(std::atan2(siny_cosp, cosy_cosp) * (180.0 / M_PI)) + 450.0)) % 360);
 }
+
 
 void IchthusV2X::VelocityCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {

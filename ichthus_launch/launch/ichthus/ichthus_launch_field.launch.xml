@@ -12,7 +12,7 @@
     <arg name='use_gnss' default='true'/>
     <arg name='use_camera' default='false' />
     <arg name='use_multi_lidar' default='false'/>
-    <arg name='use_v2x' default='true' />
+    <arg name='use_v2x' default='false' />
 
     <arg name='use_pointcloud_map' default='true'/>
     <arg name='use_lanelet2_map' default='true' />
@@ -41,8 +41,9 @@
 
     <include file='$(find-pkg-share ichthus_lidar_driver_ros2)/launch/ichthus_lidar_driver_ros2.launch.py'>
       <arg name='setup_type' value='CENTER'/>
+      <arg name="use_sim_time" value='$(var use_sim_time)' />
     </include>
-    <include file='$(find-pkg-share ichthus_v2x)/launch/ichthus_v2x.launch.py' />
+    <include file='$(find-pkg-share ichthus_v2x)/launch/ichthus_v2x.launch.py' if='$(var use_v2x)'/>
 
     <include file="$(find-pkg-share ichthus_launch)/launch/ichthus/ichthus_map.launch.py" if='$(var map)'>
       <arg name='use_sim_time' value='$(var use_sim_time)' />

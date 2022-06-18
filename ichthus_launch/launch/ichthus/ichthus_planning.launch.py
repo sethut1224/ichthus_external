@@ -179,7 +179,7 @@ class Planning:
                 self.vehicle_info,
                 {
                     "bt_tree_config_path":  self.bt_tree_config_param_path,
-                    "planning_hz" : 20.0,
+                    "planning_hz" : 10.0,
                     # 'backward_path_length' : 5.0,
                     # 'drivable_lane_backward_length':  5.0,
                     # 'drivable_lane_margin': 3.0,
@@ -266,6 +266,7 @@ class Planning:
                     "~/input/occupancy_grid",
                     "/perception/occupancy_grid_map/map",
                 ),
+                ("~/input/external_velocity_limit_mps", '/planning/scenario_planning/max_velocity'),
                 ("~/output/path", "/planning/scenario_planning/lane_driving/behavior_planning/path"),
                 ("~/output/stop_reasons", "/planning/scenario_planning/status/stop_reasons"),
                 (
@@ -288,7 +289,7 @@ class Planning:
                 self.vehicle_info,
                 {
                     # "backward_path_length": 1.0,
-                    "delay_response_time": 0.5,
+                    "delay_response_time": 0.01,
                     'use_sim_time' : LaunchConfiguration('use_sim_time')
                 },
             ],
@@ -387,6 +388,7 @@ class Planning:
                     'is_showing_debug_info' : False
                 }
             ],
+            output='log'
         )
 
         external_velocity_limit_selector = Node(
@@ -427,7 +429,8 @@ class Planning:
                     'param_path' : motion_velocity_smoother_param,
                     'common_param_path' : common_param,
                     'smoother_param_path' : smoother_param,
-                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                    'use_sim_time' : LaunchConfiguration('use_sim_time'),
+                    'max_velocity' : 50.0
                 }
             ]
         )

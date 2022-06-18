@@ -47,7 +47,7 @@ class LGSVL:
             output='screen',
             parameters=[
               lgsv_interface_param,
-              {"lgsvl.publish_tf": False},
+              {"lgsvl.publish_tf": True},
               {"lgsvl.publish_pose": False},
               {'use_sim_time' : LaunchConfiguration('use_sim_time')}
             ],

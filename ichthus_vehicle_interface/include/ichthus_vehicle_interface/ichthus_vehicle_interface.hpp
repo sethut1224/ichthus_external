@@ -19,7 +19,7 @@ using std::placeholders::_1;
 #define DEGtoRAD(deg) ((deg) * (0.017453))
 #define RADtoDEG(rad) ((rad) / (0.017453))
 
-#define STEERING_GEAR_RATIO 13.3
+#define STEERING_GEAR_RATIO 12.95
 
 #define STR_ANG_IDX   0     //  deg
 #define STR_VEL_IDX   1     //  deg/s or deg/h

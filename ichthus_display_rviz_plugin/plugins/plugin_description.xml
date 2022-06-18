@@ -1,0 +1,6 @@
+<library path="ichthus_display_rviz_plugin">
+  <class name="rviz_plugins/VelocityDisplay"
+         type="rviz_plugins::VelocityDisplay"
+         base_class_type="rviz_common::Display">
+  </class>
+</library>
