@@ -40,7 +40,7 @@ def generate_launch_description():
     def add_launch_arg(name: str, default_value=None):
         launch_arguments.append(DeclareLaunchArgument(name, default_value=default_value))
 
-    add_launch_arg('ip', "192.168.10.10")
+    add_launch_arg('ip', "192.168.10.10") # test_serv : 118.45.183.36 , OBU : 192.168.10.10
     
     return launch.LaunchDescription(
         launch_arguments 

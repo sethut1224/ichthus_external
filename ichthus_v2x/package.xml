@@ -5,7 +5,7 @@
   <version>0.0.0</version>
   <description>Ichthus_v2x package for ros2</description>
   <maintainer email="ism0705@naver.com">sumin In</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apach 2</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

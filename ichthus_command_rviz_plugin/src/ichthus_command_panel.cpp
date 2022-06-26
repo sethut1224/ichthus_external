@@ -88,12 +88,15 @@ void IchthusCommandPanel::onInitialize()
     std::bind(&IchthusCommandPanel::callbackGnssPoseCov, this, std::placeholders::_1));
 
   pub_initialpose_ = raw_node_->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "/initialpose", rclcpp::QoS(5));
+    "/initialpose3d", rclcpp::QoS(5));
 }
 
 void IchthusCommandPanel::onClickAutoSetInitialPose()
 {
-  pub_initialpose_->publish(*latest_gnss_pose_cov_); 
+  if (latest_gnss_pose_cov_ != nullptr)
+  {
+    pub_initialpose_->publish(*latest_gnss_pose_cov_); 
+  }
 }
 
 void IchthusCommandPanel::callbackGnssPoseCov(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg)

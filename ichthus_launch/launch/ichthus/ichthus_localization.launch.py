@@ -21,7 +21,10 @@ class Localization:
         self.context = context
         self.vehicle_info = self.get_vehicle_info()
         self.use_imu = LaunchConfiguration('use_imu').perform(self.context)
-        self.twist_topic = '/localization/twist_estimator/twist_with_covariance' if self.use_imu == 'true' or 'True' else '/localization/twist_estimator/vehicle_velocity_converter/twist_with_covariance'
+        # self.twist_topic = '/localization/twist_estimator/twist_with_covariance' if self.use_imu == 'true' or self.use_imu == 'True' else '/localization/twist_estimator/vehicle_velocity_converter/twist_with_covariance'
+        # self.twist_topic = '/localization/twist_estimator/twist_with_covariance'
+        self.twist_topic = '/localization/twist_estimator/vehicle_velocity_converter/twist_with_covariance'
+        self.use_gnss_localization = LaunchConfiguration('use_gnss_localization').perform(self.context)
 
     def get_vehicle_info(self):
         path = LaunchConfiguration('vehicle_info_param_path').perform(self.context)
@@ -38,7 +41,7 @@ class Localization:
         return p
 
     def localization_pipeline(self):
-        
+
         ndt_scan_matcher_param_path = LaunchConfiguration('ndt_scan_matcher_param_path').perform(self.context)
         with open(ndt_scan_matcher_param_path, "r") as f:
             ndt_scan_matcher_param = yaml.safe_load(f)["/**"]["ros__parameters"]
@@ -68,13 +71,36 @@ class Localization:
             ]
         )
 
+        # gyro_odometer = Node(
+        #     package='gyro_odometer',
+        #     executable='gyro_odometer',
+        #     name='gyro_odometer',
+        #     remappings=[
+        #         ('vehicle/twist_with_covariance', '/localization/twist_estimator/vehicle_velocity_converter/twist_with_covariance'),
+        #         ('imu', '/imu/corrected_data'),
+        #         ('twist_raw','gyro_twist_raw'),
+        #         ('twist_with_covariance_raw', '/localization/twist_estimator/twist_with_covariance_raw'),
+        #         ('twist', 'gyro_twist'),
+        #         ('twist_with_covariance', '/localization/twist_estimator/twist_with_covariance')
+        #     ],
+        #     parameters=[
+        #         {
+        #             'output_frame' : 'base_link',
+        #             'message_timeout_sec' : 0.2,
+        #             'use_sim_time' : LaunchConfiguration('use_sim_time'),
+        #         }
+        #     ],
+        #     condition=IfCondition(LaunchConfiguration('use_imu'))
+        # )
+
         gyro_odometer = Node(
-            package='gyro_odometer',
-            executable='gyro_odometer',
+            package='ichthus_gyro_odometer',
+            executable='ichthus_gyro_odometer',
             name='gyro_odometer',
             remappings=[
                 ('vehicle/twist_with_covariance', '/localization/twist_estimator/vehicle_velocity_converter/twist_with_covariance'),
-                ('imu', '/imu/imu_data'),
+                ('imu', '/imu/corrected_data'),
+                ('/imu/velocity', '/velocity'),
                 ('twist_raw','gyro_twist_raw'),
                 ('twist_with_covariance_raw', '/localization/twist_estimator/twist_with_covariance_raw'),
                 ('twist', 'gyro_twist'),
@@ -159,13 +185,17 @@ class Localization:
                 ('pointcloud_map', '/pointcloud_map'),
                 ('ndt_pose', '/localization/pose_estimator/pose'),
                 ('ndt_pose_with_covariance','/localization/pose_estimator/pose_with_covariance')
-            ]
+            ],
+            condition=IfCondition(LaunchConfiguration('use_ndt_localization'))
+            # condition=UnlessCondition(LaunchConfiguration('use_gnss_localization'))
         )
+        
+        ekf_localizer = None
 
-        ekf_localizer = Node(
+        ekf_localizer_ndt = Node(
             package='ekf_localizer',
             executable='ekf_localizer',
-            name='ekf_localizer',
+            name='ekf_localizer_ndt',
             parameters=[
                 {
                     'pose_frame_id' : 'map',
@@ -174,13 +204,13 @@ class Localization:
                     'predict_frequency' : 100.0,
                     'tf_rate' : 50.0,
                     'extend_state_step' : 50,
-                    'pose_additional_delay' : 0.0,
-                    'pose_measure_uncertainty_time' : 0.015,
+                    'pose_additional_delay' : 0.1,
+                    'pose_measure_uncertainty_time' : 0.01,
                     'pose_rate' : 10.0,
-                    'pose_gate_dist' : 100.0,
-                    'twist_additional_delay' : 0.01,
+                    'pose_gate_dist' : 10000.0,
+                    'twist_additional_delay' : 0.0,
                     'twist_rate' : 100.0,
-                    'twist_gate_dist' : 10000.0,
+                    'twist_gate_dist' : 50.0,
                     'proc_stddev_vx_c' : 5.0,
                     'proc_stddev_wz_c' : 1.0,
                     'twist_stddev_wz' : 0.003,
@@ -200,8 +230,57 @@ class Localization:
                 ('ekf_pose_with_covariance_without_yawbias', '/localization/pose_twist_fusion_filter/pose_with_covariance_without_yawbias'),
                 ('ekf_twist','/localization/pose_twist_fusion_filter/twist'),
                 ('ekf_twist_with_covariance', '/localization/pose_twist_fusion_filter/twist_with_covariance')
-            ]
+            ],
+            # condition=UnlesCondition(LaunchConfiguration('use_gnss_localization'))
+            condition=IfCondition(LaunchConfiguration('use_ndt_localization'))
         )
+
+        ekf_localizer_gnss = Node(
+            package='ekf_localizer',
+            executable='ekf_localizer',
+            name='ekf_localizer_gnss',
+            parameters=[
+                {
+                    'pose_frame_id' : 'map',
+                    'show_debug_info' : False,
+                    'enable_yaw_bias_estimation' : False,
+                    'predict_frequency' : 100.0,
+                    'tf_rate' : 50.0,
+                    'extend_state_step' : 50,
+                    'pose_additional_delay' : 0.0,
+                    'pose_measure_uncertainty_time' : 0.015,
+                    'pose_rate' : 100.0,
+                    'pose_gate_dist' : 10000.0,
+                    'twist_additional_delay' : 0.01,
+                    'twist_rate' : 100.0,
+                    'twist_gate_dist' : 10000.0,
+                    'proc_stddev_vx_c' : 5.0,
+                    'proc_stddev_wz_c' : 1.0,
+                    'twist_stddev_wz' : 0.003,
+                    'proc_stddev_yaw_c' : 0.005,
+                    'proc_stddev_yaw_bias_c' : 0.001,
+                    'use_sim_time' : LaunchConfiguration('use_sim_time'),
+                }
+            ],
+            remappings=[
+                ('initialpose', 'initialpose3d'),
+                ('in_pose_with_covariance', '/gnss_pose_cov'),
+                ('in_twist_with_covariance', "/imu/twist_with_covariance"),
+                ('ekf_odom', '/localization/pose_twist_fusion_filter/kinematic_state'),
+                ('ekf_pose', '/localization/pose_twist_fusion_filter/pose'),
+                ('ekf_pose_with_covariance', '/localization/pose_twist_fusion_filter/pose_with_covariance'),
+                ('ekf_pose_without_yawbias', '/localization/pose_twist_fusion_filter/pose_without_yawbias'),
+                ('ekf_pose_with_covariance_without_yawbias', '/localization/pose_twist_fusion_filter/pose_with_covariance_without_yawbias'),
+                ('ekf_twist','/localization/pose_twist_fusion_filter/twist'),
+                ('ekf_twist_with_covariance', '/localization/pose_twist_fusion_filter/twist_with_covariance')
+            ],
+            condition=IfCondition(LaunchConfiguration('use_gnss_localization'))
+        )
+
+        # if self.use_gnss_localization == 'true' or self.use_gnss_localization =='True':
+        #     ekf_localizer = ekf_localizer_gnss
+        # else:
+        #     ekf_localizer = ekf_localizer_ndt
 
         stop_filter = Node(
             package='stop_filter',
@@ -218,10 +297,10 @@ class Localization:
                     'wz_threshold' : 0.01,
                     'use_sim_time' : LaunchConfiguration('use_sim_time'),
                 }
-            ]
+            ],
         )
 
-        return [vehicle_velocity_converter, gyro_odometer, pose_initializer, voxel_grid_downsample_filter, ekf_localizer, ndt_scan_matcher, stop_filter]
+        return [vehicle_velocity_converter, gyro_odometer, pose_initializer, voxel_grid_downsample_filter, ekf_localizer_ndt, ekf_localizer_gnss, ndt_scan_matcher, stop_filter]
 
 def launch_setup(context, *args, **kwargs):
     pipeline = Localization(context)
@@ -268,6 +347,7 @@ def generate_launch_description():
     add_launch_arg('vehicle_velocity_converter_param_path', vehicle_velocity_converter_param_path_default)
     add_launch_arg('pose_initializer_param_path',pose_initializer_param_path_default)
     add_launch_arg('use_imu', 'False')
+    add_launch_arg('use_gnss_localization', 'False')
 
     return launch.LaunchDescription(
         launch_arguments 

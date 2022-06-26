@@ -106,12 +106,12 @@ def generate_launch_description():
     return launch.LaunchDescription(
         launch_arguments
         +[OpaqueFunction(function=launch_setup),
-        ExecuteProcess(
-            cmd=[
-                "ros2","topic","pub", "/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/path_change_approval", "tier4_planning_msgs/msg/Approval", 
-                "{approval: true}", "-r", "1",
-            ]
-        ),
+        # ExecuteProcess(
+        #     cmd=[
+        #         "ros2","topic","pub", "/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/path_change_approval", "tier4_planning_msgs/msg/Approval", 
+        #         "{approval: true}", "-r", "1",
+        #     ]
+        # ),
 
         ExecuteProcess(
             cmd=[

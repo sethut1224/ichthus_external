@@ -39,6 +39,7 @@ link_directories(
 
 add_executable(ichthus_v2x src/ichthus_v2x_main.cpp)
 ament_target_dependencies(ichthus_v2x
+  geometry_msgs
   std_msgs
   sensor_msgs
   kiapi_msgs

@@ -29,5 +29,5 @@ clean:
 regen: regenerate-from-asn1-source
 
 regenerate-from-asn1-source:
-	asn1c -f compound-names -pdu=all ../asn/J2735_201603DA_copyright_updated 12.2.ASN
+	asn1c -fcompound-names -pdu=all ../asn/J2735_201603DA_copyright_updated 12.2.ASN
 

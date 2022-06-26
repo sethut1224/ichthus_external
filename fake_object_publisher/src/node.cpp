@@ -30,6 +30,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <cmath>
 
 ObjectInfo::ObjectInfo(
   const dummy_perception_publisher::msg::Object & object, const rclcpp::Time & current_time, std::vector<double>& move_distance_vec)
@@ -44,7 +45,8 @@ ObjectInfo::ObjectInfo(
   double move_distance = move_distance_vec[3] * (current_time.seconds() - rclcpp::Time(object.header.stamp).seconds());
   move_distance = move_distance_vec[3];
 
-  move_distance_vec[0] = move_distance_vec[0] + move_distance;
+  move_distance_vec[0] = move_distance_vec[0] + move_distance * cos(move_distance_vec[2]);
+  move_distance_vec[1] = move_distance_vec[1] + move_distance * sin(move_distance_vec[2]);
 
   tf2::Transform tf_object_origin2moved_object;
   tf2::Transform tf_map2object_origin;

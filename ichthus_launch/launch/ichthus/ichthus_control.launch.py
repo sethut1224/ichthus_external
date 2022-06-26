@@ -69,7 +69,7 @@ class Control:
                 self.vehicle_info,
                 {
                 'use_sim_time' : LaunchConfiguration('use_sim_time'),
-                'input_delay' : 0.01,
+                'input_delay' : 0.07,
                 'steer_lim_deg' : 35.0,
                 }
             ],
@@ -111,7 +111,7 @@ class Control:
                 {
                     "show_debug_info": True,
                     "enable_pub_debug": True,
-                    'delay_compensation_time' : 0.01,
+                    'delay_compensation_time' : 0.1,
                     'use_sim_time' : LaunchConfiguration('use_sim_time')
                 },
             ],
@@ -177,7 +177,7 @@ class Control:
                     "use_external_emergency_stop": True,
                     "use_start_request": False,
                     'use_sim_time' : LaunchConfiguration('use_sim_time'),
-                    'vel_lim' : 50.0
+                    'vel_lim' : 20.0
                 },
             ],
         )

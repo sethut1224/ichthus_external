@@ -12,7 +12,7 @@
     <arg name='use_camera' default='true' />
     <arg name='use_pointcloud_map' default='false'/>
     <arg name='use_lanelet2_map' default='true' />
-    <arg name='use_fake_objects' default='false' />
+    <arg name='use_fake_objects' default='true' />
     <arg name='lanelet2_map' default='$(find-pkg-share ichthus_launch)/map/SanFrancisco.osm'/>
     <arg name='pointcloud_map' default='$(find-pkg-share ichthus_launch)/map/SanFrancisco.pcd'/>
     <arg name='yolo_type' default='yolov5m'/>

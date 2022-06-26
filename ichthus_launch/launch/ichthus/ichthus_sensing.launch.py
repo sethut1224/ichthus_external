@@ -48,8 +48,8 @@ class Sensing:
             executable='imu_corrector',
             name='imu_corrector',
             remappings=[
-                ('input', '/imu/imu_raw'),
-                ('output', '/imu/imu_data')
+                ('input', '/imu/data'),
+                ('output', '/imu/corrected_data')
             ],
             parameters =[
                 imu_corrector_param,
@@ -61,8 +61,28 @@ class Sensing:
         )
 
         return [imu_corrector]
-    
+
     def gnss(self):
+        xsens_driver = Node( # mtnode.py
+            package='xsens_driver_ros2',
+            namespace='',
+            executable='mtnode.py',
+            name='mtnode',
+            parameters=[
+                {'device': 'auto'},
+                {'baudrate': 0},
+                {'timeout': 0.002},
+                {'initial_wait': 0.1},
+                {'frame_id': 'imu'},
+                {'frame_local': 'ENU'},
+                {'no_rotation_duration': 0},
+                {'angular_velocity_covariance_diagonal': [0.0004, 0.0004, 0.0004]},
+                {'linear_acceleration_covariance_diagonal': [0.0004, 0.0004, 0.0004]},
+                {'orientation_covariance_diagonal': [0.01745, 0.01745, 0.15708]},
+            ],
+            output='screen',
+        )
+
         g2m_poser = Node(
             package='g2m_poser',
             executable='g2m_poser_exe',
@@ -71,23 +91,29 @@ class Sensing:
                 {
                     'use_sim_time' : LaunchConfiguration('use_sim_time'),
                     'use_tf_publish': LaunchConfiguration('use_tf_publish'),
-                    'target_frame_id': LaunchConfiguration('target_frame_id'),
+                    'use_b2g_tf_listener' : LaunchConfiguration('use_b2g_tf_listener'),
+                    'base_link_frame': LaunchConfiguration('base_link_frame'),
                     'origin_x': LaunchConfiguration('origin_x'),
                     'origin_y': LaunchConfiguration('origin_y'),
                     'origin_z': LaunchConfiguration('origin_z'),
+                    'b2g_x' : LaunchConfiguration('b2g_x'),
+                    'b2g_y' : LaunchConfiguration('b2g_y'),
+                    'b2g_z' : LaunchConfiguration('b2g_z'),
                     'heading_source': LaunchConfiguration('heading_source'),
+                    'max_buffer_size': LaunchConfiguration('max_buffer_size'),
                     'pose_diff_for_heading': LaunchConfiguration('pose_diff_for_heading'),
                     'fix_topic': LaunchConfiguration('fix_topic'),
                     'imu_topic': LaunchConfiguration('imu_topic'),
                     'odom_topic': LaunchConfiguration('odom_topic'),
                     'pose_topic': LaunchConfiguration('pose_topic'),
                     'pose_cov_topic': LaunchConfiguration('pose_cov_topic'),
+                    # 'pose_cov_topic' : self.gnss_pose_cov_topic
                 },
             ],
             condition=IfCondition(LaunchConfiguration('use_gnss'))
         )
 
-        return [g2m_poser]
+        return [g2m_poser, xsens_driver]    
 
 def launch_setup(context, *args, **kwargs):
     pipeline = Sensing(context)
@@ -126,7 +152,8 @@ def generate_launch_description():
     ### gnss ###
     ############
     add_launch_arg("use_tf_publish", "false")
-    add_launch_arg("target_frame_id", "gnss")
+    add_launch_arg("use_b2g_tf_listener", "false")
+    add_launch_arg("base_link_frame", "base_link")
 
     ### origin of city ###
     add_launch_arg("origin_x", "'445815.539508'")
@@ -134,14 +161,20 @@ def generate_launch_description():
     add_launch_arg("origin_z", "'48.640911'")
     ######################
     
+    add_launch_arg("b2g_x", "0.359")
+    add_launch_arg("b2g_y", "0.0")
+    add_launch_arg("b2g_z", "1.348")
+
     add_launch_arg("heading_source", "NONE") # NONE, IMU, ODOM
-    add_launch_arg("pose_diff_for_heading", "0.4")
+    add_launch_arg("max_buffer_size", "5")
+    add_launch_arg("pose_diff_for_heading", "0.2")
     add_launch_arg("fix_topic", "/fix")
     add_launch_arg("imu_topic", "/imu/data")
     add_launch_arg("odom_topic", "/output/velocity_report")
     add_launch_arg("pose_topic", "/gnss_pose")
     add_launch_arg("pose_cov_topic", "/gnss_pose_cov")
     add_launch_arg("use_gnss", "true")
+
     
 
     return launch.LaunchDescription(

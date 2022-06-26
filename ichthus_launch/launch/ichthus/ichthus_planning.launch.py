@@ -7,7 +7,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.actions import OpaqueFunction
 # from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
-# from launch.conditions import UnlessCondition
+from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
 # from launch.substitutions import PathJoinSubstitution
 # from launch_ros.actions import ComposableNodeContainer
@@ -95,6 +95,28 @@ class Planning:
             ],
         )
 
+        lane_keeping_planner = Node(
+            package="lane_keeping_planner",
+            executable='lane_keeping_planner',
+            name="lane_keeping_planner",
+            remappings=[
+                ("input/vector_map", "/map/vector_map"),
+                ("input/goal_pose", "/planning/mission_planning/goal"),
+                ("input/checkpoint", "/planning/mission_planning/checkpoint"),
+                ("output/route", "/planning/mission_planning/route"),
+                ("debug/route_marker", "/planning/mission_planning/route_marker"),
+            ],
+            parameters=[
+                {
+                    "map_frame": "map",
+                    "base_link_frame": "base_link",
+                    'use_sim_time' : LaunchConfiguration('use_sim_time')
+                }
+            ],
+            output="screen",
+            condition=IfCondition(LaunchConfiguration('use_lane_keeping_planner'))
+        )
+
         goal_pose_visualizer = Node(
             package="mission_planner",
             executable="goal_pose_visualizer",
@@ -110,7 +132,7 @@ class Planning:
             ]
         )
 
-        return [mission_planner, goal_pose_visualizer]
+        return [mission_planner, goal_pose_visualizer, lane_keeping_planner]
 
     def behavior_planning(self):
         
@@ -239,6 +261,12 @@ class Planning:
             virtual_traffic_light_param = yaml.safe_load(f)["/**"]["ros__parameters"]
         with open(self.behavior_velocity_planner_param_path, "r") as f:
             behavior_velocity_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+        with open(self.common_param_path, "r") as f:
+            common_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+        with open(self.motion_velocity_smoother_param_path, "r") as f:
+            motion_velocity_smoother_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+        with open(self.smoother_param_path, "r") as f:
+            smoother_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
         behavior_velocity_planner = Node(
             package="behavior_velocity_planner",
@@ -287,9 +315,12 @@ class Planning:
                 occlusion_spot_param,
                 no_stopping_area_param,
                 self.vehicle_info,
+                common_param,
+                motion_velocity_smoother_param,
+                smoother_param,
                 {
                     # "backward_path_length": 1.0,
-                    "delay_response_time": 0.01,
+                    "delay_response_time": 0.1,
                     'use_sim_time' : LaunchConfiguration('use_sim_time')
                 },
             ],
@@ -297,6 +328,7 @@ class Planning:
 
 
         return [behavior_path_planner, scenario_selector, behavior_velocity_planner]
+        # return [behavior_velocity_planner]
 
     def motion_planning(self):
 
@@ -328,7 +360,7 @@ class Planning:
             parameters=[
                 obstacle_avoidance_planner_param,
                 self.vehicle_info,
-                {"is_showing_debug_info": True},
+                {"is_showing_debug_info": False},
                 {"is_stopping_if_outside_drivable_area": True},
                 {'use_sim_time' : LaunchConfiguration('use_sim_time')}
             ],
@@ -402,9 +434,9 @@ class Planning:
                 ("output/external_velocity_limit", '/planning/scenario_planning/max_velocity')
             ],
             parameters=[
+                motion_velocity_smoother_param,
+                common_param,
                 {
-                    'param_path' : motion_velocity_smoother_param,
-                    'common_param_path' : common_param,
                     'use_sim_time' : LaunchConfiguration('use_sim_time')
                 }
             ]
@@ -422,22 +454,23 @@ class Planning:
                 ("/localization/kinematic_state", self.kinematic_state)
             ],
             parameters=[
+                motion_velocity_smoother_param,
+                common_param,
+                smoother_param,
                 {
-                    "smoother_type" : self.smoother_type,
                     'publish_debug_trajs' : True,
                     'algorithm_type' : self.smoother_type,
-                    'param_path' : motion_velocity_smoother_param,
-                    'common_param_path' : common_param,
-                    'smoother_param_path' : smoother_param,
                     'use_sim_time' : LaunchConfiguration('use_sim_time'),
-                    'max_velocity' : 50.0
+                    'max_velocity' : 20.0
                 }
-            ]
+            ],
+            output='screen'
         )
 
 
 
         return [obstacle_avoidance_planner, obstacle_cruise_planner, external_velocity_limit_selector, motion_velocity_smoother]
+        # return [motion_velocity_smoother]
 
 def launch_setup(context, *args, **kwargs):
     pipeline = Planning(context)
@@ -502,6 +535,7 @@ def generate_launch_description():
 
     add_launch_arg('use_sim_time', 'False')
     add_launch_arg("kinematic_state", 'lgsvl/gnss_odom')
+    add_launch_arg('use_lane_keeping_planner', 'false')
 
     return launch.LaunchDescription(
         launch_arguments

@@ -7,16 +7,16 @@
 
       # longitudinal info
       idling_time: 4.0 # idling time to detect front vehicle starting deceleration [s]
-      min_ego_accel_for_rss: -1.0 # ego's acceleration to calculate RSS distance [m/ss]
-      min_object_accel_for_rss: -1.0 # front obstacle's acceleration to calculate RSS distance [m/ss]
+      min_ego_accel_for_rss: -5.0 # ego's acceleration to calculate RSS distance [m/ss]
+      min_object_accel_for_rss: -5.0 # front obstacle's acceleration to calculate RSS distance [m/ss]
       safe_distance_margin : 6.0 # This is also used as a stop margin [m]
 
       lpf_gain_for_accel: 0.2 # gain of low pass filter for ego acceleration [-]
 
       nearest_dist_deviation_threshold: 3.0 # [m] for finding nearest index
       nearest_yaw_deviation_threshold: 1.57 # [rad] for finding nearest index
-      min_behavior_stop_margin: 3.0 # [m]
-      obstacle_velocity_threshold_from_cruise_to_stop : 3.0 # stop planning is executed to the obstacle whose velocity is less than this value [m/s]
+      min_behavior_stop_margin: 10.0 # [m]
+      obstacle_velocity_threshold_from_cruise_to_stop : 5.0 # stop planning is executed to the obstacle whose velocity is less than this value [m/s]
 
       cruise_obstacle_type:
         unknown: true
@@ -65,11 +65,11 @@
       # use_predicted_obstacle_pose: false
 
       # PID gains to keep safe distance with the front vehicle
-      kp: 0.6
+      kp: 0.1
       ki: 0.0
       kd: 0.5
 
-      min_accel_during_cruise: -2.0 # minimum acceleration during cruise to slow down [m/ss]
+      min_accel_during_cruise: -6.0 # minimum acceleration during cruise to slow down [m/ss]
 
       output_ratio_during_accel: 2.5 # target acceleration is multiplied with this value while ego accelerates to catch up the front vehicle [-]
       vel_to_acc_weight: 8.0 # target acceleration is calculated by (target_velocity - current_velocity) * vel_to_acc_weight [-]

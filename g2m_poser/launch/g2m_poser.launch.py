@@ -34,12 +34,22 @@ def launch_setup(context, *args, **kwargs):
         "use_sim_time": LaunchConfiguration("use_sim_time"),
         
         "use_tf_publish": LaunchConfiguration("use_tf_publish"),
-        "target_frame_id": LaunchConfiguration("target_frame_id"),
+        "use_b2g_tf_listener": LaunchConfiguration("use_b2g_tf_listener"),
+        
+        "base_link_frame": LaunchConfiguration("base_link_frame"),
         "pose_diff_for_heading": LaunchConfiguration("pose_diff_for_heading"),
+
         "origin_x": LaunchConfiguration("origin_x"),
         "origin_y": LaunchConfiguration("origin_y"),
         "origin_z": LaunchConfiguration("origin_z"),
+
+        "b2g_x": LaunchConfiguration("b2g_x"),
+        "b2g_y": LaunchConfiguration("b2g_y"),
+        "b2g_z": LaunchConfiguration("b2g_z"),
+
         "heading_source": LaunchConfiguration("heading_source"),
+        "max_buffer_size": LaunchConfiguration("max_buffer_size"),
+        
         "fix_topic": LaunchConfiguration("fix_topic"),
         "imu_topic": LaunchConfiguration("imu_topic"),
         "odom_topic": LaunchConfiguration("odom_topic"),
@@ -64,16 +74,22 @@ def generate_launch_description():
     )
 
   # component
-  add_launch_arg("use_tf_publish", "false")
-  add_launch_arg("target_frame_id", "gnss")
+  add_launch_arg("use_tf_publish", "true")
+  add_launch_arg("use_b2g_tf_listener", "false")
+  add_launch_arg("base_link_frame", "base_link")
   
   add_launch_arg("origin_x", "'445815.539508'")
   add_launch_arg("origin_y", "'3944953.128090'")
   add_launch_arg("origin_z", "'48.640911'")
 
+  add_launch_arg("b2g_x", "0.359")
+  add_launch_arg("b2g_y", "0.0")
+  add_launch_arg("b2g_z", "1.348")
+
   add_launch_arg("heading_source", "NONE") # NONE, IMU, ODOM
 
   add_launch_arg("pose_diff_for_heading", "0.4")
+  add_launch_arg("max_buffer_size", "5")
 
   add_launch_arg("fix_topic", "/fix")
   add_launch_arg("imu_topic", "/imu/data")

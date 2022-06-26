@@ -4,37 +4,36 @@
 namespace ichthus_v2x
 {
 
+rclcpp::Time prev_time;
 bool done = false;
 bool is_first_topic = true;
 
-IchthusV2X::IchthusV2X() : Node("ichthus_v2x")
+IchthusV2X::IchthusV2X() : Node("ichthus_v2x") 
 {
+  install_signal_handler();
   auto qos_profile = rclcpp::QoS(rclcpp::KeepLast(10));
   v2x_pub_ = this->create_publisher<kiapi_msgs::msg::V2xinfo>("v2x_info", qos_profile);
-  // pvd_pub_ = this->create_publisher<kiapi_msgs::msg::Pvdinfo>("pvd_info", qos_profile); /* for test */
-  // loc_sub_ = this->create_subscription<kiapi_msgs::msg::Mylocation>("gnss_info", qos_profile,
-              // std::bind(&IchthusV2X::LocationCallback, this, std::placeholders::_1));   /* for test */
-  loc_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>("/fix", qos_profile,
+  loc_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>("/fix", 
+              qos_profile,
               std::bind(&IchthusV2X::GnssCallback, this, std::placeholders::_1));
-  // ori_sub_ = this->create_subscription<sensor_msgs::msg::Imu>("/imu/data", qos_profile,
-  //             std::bind(&IchthusV2X::ImuCallback, this, std::placeholders::_1));
+  gnss_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("/gnss_pose", 
+              qos_profile,
+              std::bind(&IchthusV2X::GnssPoseCallback, this, std::placeholders::_1));
   vel_sub_ = this->create_subscription<std_msgs::msg::Float64MultiArray>("/v2x", qos_profile,
               std::bind(&IchthusV2X::VelocityCallback, this, std::placeholders::_1));
-  gnss_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("/gnss_pose", 
-              rclcpp::SensorDataQoS().keep_last(64),
-              std::bind(&IchthusV2X::GnssPoseCallback, this, std::placeholders::_1));
+  // pvd_pub_ = this->create_publisher<kiapi_msgs::msg::Pvdinfo>("pvd_info", qos_profile); /* DEBUG */
+  // loc_sub_ = this->create_subscription<kiapi_msgs::msg::Mylocation>("gnss_info", qos_profile,
+  //             std::bind(&IchthusV2X::LocationCallback, this, std::placeholders::_1));   /* DEBUG */
+  // ori_sub_ = this->create_subscription<sensor_msgs::msg::Imu>("/imu/data", qos_profile, /* DEBUG */
+  //             std::bind(&IchthusV2X::ImuCallback, this, std::placeholders::_1));
 
-
-  // this->create_subscription<sensor_msgs::msg::NavSatFix>(
-  //   this->declare_parameter("fix_topic", "/fix"), 
-  //   rclcpp::SensorDataQoS().keep_last(64),
-  //   std::bind(&G2MPoser::callbackFix, this, std::placeholders::_1));
   IP = this->declare_parameter("ip", "192.168.10.10");
-  std::cout<<"IP : "<<IP<<std::endl;
+  std::cout << "IP : " << IP << std::endl; /* DEBUG */
 }
 IchthusV2X::~IchthusV2X()
 {
 }
+
 /*
 void IchthusV2X::LocationCallback(const kiapi_msgs::msg::Mylocation::SharedPtr msg)
 {
@@ -53,12 +52,23 @@ void IchthusV2X::LocationCallback(const kiapi_msgs::msg::Mylocation::SharedPtr m
   }
 }
 */
-void IchthusV2X::GnssCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg)
+
+/*
+void IchthusV2X::ImuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
 {
   // std::cout << "callback" << std::endl;
-  Vli_.latitude = msg->latitude;
-  Vli_.longitude = msg->longitude;
-  Vli_.elevation = msg->altitude;
+  double siny_cosp = 2 * (msg->orientation.w * msg->orientation.z + msg->orientation.x * msg->orientation.y);
+  double cosy_cosp = 1 - 2 * (msg->orientation.y * msg->orientation.y + msg->orientation.z * msg->orientation.z);
+  Vli_.heading = std::atan2(siny_cosp, cosy_cosp);
+}
+*/
+
+void IchthusV2X::GnssCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg)
+{
+  // std::cout << "callback" << std::endl; /* DEBUG */
+  Vli_.latitude = msg->latitude*10000000;
+  Vli_.longitude = msg->longitude*10000000;
+  Vli_.elevation = msg->altitude*10;
 
   if(is_first_topic)
   {
@@ -67,29 +77,21 @@ void IchthusV2X::GnssCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg)
   }
 }
 
-// void IchthusV2X::ImuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
-// {
-//   // std::cout << "callback" << std::endl;
-//   double siny_cosp = 2.0 * (msg->orientation.w * msg->orientation.z + msg->orientation.x * msg->orientation.y);
-//   double cosy_cosp = 1.0 - 2.0 * (msg->orientation.y * msg->orientation.y + msg->orientation.z * msg->orientation.z);
-//   Vli_.heading = std::atan2(siny_cosp, cosy_cosp) * (180.0 / M_PI);
-// }
 
 void IchthusV2X::GnssPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
 {
-  // std::cout << "callback" << std::endl;
+  // std::cout << "callback" << std::endl; /* DEBUG */
   double siny_cosp = 2.0 * (msg->pose.orientation.w * msg->pose.orientation.z + msg->pose.orientation.x * msg->pose.orientation.y);
   double cosy_cosp = 1.0 - 2.0 * (msg->pose.orientation.y * msg->pose.orientation.y + msg->pose.orientation.z * msg->pose.orientation.z);
-  // Vli_.heading = std::atan2(siny_cosp, cosy_cosp) * (180.0 / M_PI);
-  Vli_.heading = static_cast<double>(static_cast<int>((-(std::atan2(siny_cosp, cosy_cosp) * (180.0 / M_PI)) + 450.0)) % 360);
+  Vli_.heading = static_cast<double>(static_cast<int>((-(std::atan2(siny_cosp, cosy_cosp) * (180.0 / M_PI)) + 450.0)) % 360)*80;
 }
 
 
 void IchthusV2X::VelocityCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
-  // std::cout << "velcallback1 : " << msg->data[0] << std::endl;
-  std::cout << "velcallback2 : " << msg->data[1] << std::endl;
-  Vli_.speed = msg->data[0];
+  // std::cout << "velcallback1 : " << msg->data[0] << std::endl; /* DEBUG */
+  // std::cout << "velcallback2 : " << msg->data[1] << std::endl; /* DEBUG */
+  Vli_.speed = msg->data[0]*50;
   if (msg->data[1] == 0)
   {
     Vli_.transmisson = 1;
@@ -119,27 +121,24 @@ void IchthusV2X::connect_obu_uper_tcp()
   obu_addr.sin_family = AF_INET;
   obu_addr.sin_port = htons(obu_port);
 
-  // String IP 주소 변환 
+  /* Convert String IP Address */
   if (inet_pton(AF_INET, obu_ip.c_str(), &obu_addr.sin_addr) <= 0)
   {
-    // fprintf(stderr, "DEBUG : Error, inet_pton\n");
     std::cout << "DEBUG : Error, inet_pton" << std::endl;
     exit(1);
   }
 
-  // 클라이언트 Socket FD 생성
+  /* Create Client Socket FD */
   if ((sockFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
   {
-    // fprintf(stderr, "DEBUG : connect failed, retry\n");
     std::cout << "DEBUG : connect failed, retry" << std::endl;
     exit(1);
   }
 
-  // 클라이언트, 서버 TCP 연결
+  /* Connect Client, Server TCP */
   int connected = -1;
   if ((connected = connect(sockFd, (const sockaddr *)&obu_addr, sizeof obu_addr))<0)
   {
-    // fprintf(stderr, "DEBUG : step sock connect error : %d\n",connected);
     std::cout << "DEBUG : step sock connect error : " << connected << std::endl;
     exit(1);
   }
@@ -148,6 +147,7 @@ void IchthusV2X::connect_obu_uper_tcp()
 
   std::cout << "DEBUG : OBU TCP [" << obu_ip << ":" << obu_port << "] Connected" << std::endl;
 
+  /* Thread */
   th1 = receiveSpatThread();
   th2 = sendPvdThread();
 }
@@ -179,33 +179,33 @@ void IchthusV2X::receiveSpat()
       close(sockFd);
       exit(-1);
     }
-    // fprintf(stdout, "Rx %d bytes\n", rxSize);
+    // std::cout << "Rx " << rxSize << " bytes" << std::endl; /* DEBUG */
 
     string msgs;
     msgs.append((char *)rxBuffer, sizeof(rxBuffer));
-    // std::cout << "msgs : " << msgs << std:: endl;
 
     if (msgs.size() < sizeof(struct CestObuUperPacketHeader))
     { 
-        fprintf(stdout, "require more bytes, current bytes = %d \n",msgs.size());
-        break;
+      // fprintf(stdout, "require more bytes, current bytes = %d \n",msgs.size());
+      std::cout <<  "require more bytes, current bytes = " << msgs.size() << std::endl;
+      break;
     }
       
     std::string payload;
     struct CestObuUperPacketHeader *header = (struct CestObuUperPacketHeader *)&msgs[0]; 
     payload.append(msgs, sizeof(struct CestObuUperPacketHeader), header->payloadLen); 
-    // std::cout<<"size : "<<header->payloadLen<<endl;
+    // std::cout << "size : " << header->payloadLen << endl; /* DEBUG */
 
     if(header->messageType == 0x3411)
     {
       struct TxWaveUperResultPayload *txpayload = (struct TxWaveUperResultPayload*)&payload[0];
-      // std::cout << "RX - \"TX_WAVE_UPER_ACK\" [" << txpayload->txWaveUperSeq << "/" << txpayload->resultCode << "/" << txpayload->size << "]" << std::endl;
       printf("RX - \"TX_WAVE_UPER_ACK\" [%d/%d/%d]\n", txpayload->txWaveUperSeq, txpayload->resultCode, txpayload->size);
       uperSize = 0;
     }
     else
     {
-      std::cout << "RX - \"RX_WAVE_UPER\" [" << header->payloadLen << "]" << std::endl;
+      printf("RX - \"RX_WAVE_UPER\" [%d]\n", header->payloadLen);
+      // std::cout << "RX - \"RX_WAVE_UPER\" [" << header->payloadLen << "]" << std::endl;
     }
 
     MessageFrame_t* msgFrame = nullptr;
@@ -214,7 +214,9 @@ void IchthusV2X::receiveSpat()
     switch (res.code)
     {
       case asn_dec_rval_code_e::RC_OK:
-          fprintf(stderr,"\n[RC_OK]\n");
+          // fprintf(stderr,"\n[RC_OK]\n");
+          // printf("\n[RC_OK]\n");
+          std::cout << "\n[RC_OK]" << std::endl;
           switch (msgFrame->messageId)
           {
             case DSRC_ID_SPAT:
@@ -231,17 +233,17 @@ void IchthusV2X::receiveSpat()
           }
 
           v2x_pub_->publish(v2x_msg);
-          //asn_fprint(stderr, rxUperBuffer&asn_DEF_MessageFrame, msgFrame);
+          //asn_fprint(stderr, rxUperBuffer&asn_DEF_MessageFrame, msgFrame); /* DEBUG */
 
           break;
       case asn_dec_rval_code_e::RC_WMORE:
-          fprintf(stderr,"\n[RC_WMORE]\n");
+          // fprintf(stderr,"\n[RC_WMORE]\n");
+          std::cout << "\n[RC_WMORE]" << std::endl;
           break;
-  
       case asn_dec_rval_code_e::RC_FAIL:
-          fprintf(stderr,"\n[RC_FAIL]\n");
+          // fprintf(stderr,"\n[RC_FAIL]\n");
+          std::cout << "\n[RC_FAIL]" << std::endl;
           break;
-
       default:
           break;
     }
@@ -263,9 +265,7 @@ void IchthusV2X::gen_SPaTMsg(SPAT_t *spat)
   v2x_msg.spat_eventstate.resize(0);     // 빨,초,노 event값(신호상태)
   v2x_msg.spat_minendtime.resize(0);     // 만약 minEndTime 존재한다면 넣기.(예상 최소 종료 시각)
 
-  // ROS_INFO("init_gen_SPaT");
-  // RCLCPP_INFO("init_gen_SPaT");
-  std::cout << "init_gen_SPaT" << endl;
+  std::cout << "\ninit_gen_SPaT" << endl;
   for(int i = 0; i < spat->intersections.list.count; i++)
   {
     struct IntersectionState *inter_p = spat->intersections.list.array[i];
@@ -298,124 +298,123 @@ int IchthusV2X::parse_spat(SPAT_t *spat)
   {
     struct IntersectionState *ptr = spat->intersections.list.array[i];
 
-    // fprintf(stdout, "   Item %ld\n", i);
-    for (int i = 0; i < ptr->name->size; ++i)
+    for (int i = 0; i < static_cast<int>(ptr->name->size); ++i)
     {
       printf("%c", ptr->name->buf[i]);
     }
 
     printf("\n");
 
-    fprintf(stdout, "id\n");
-    fprintf(stdout, "  region : %ld\n", ptr->id.region);
-    fprintf(stdout, "  id     : %ld\n", ptr->id.id);
-    fprintf(stdout, "revision     : %ld\n", ptr->revision);
+    printf("id\n");
+    printf("  region : %ld\n", *ptr->id.region);
+    printf("  id     : %ld\n", ptr->id.id);
+    printf("revision     : %ld\n", ptr->revision);
 
-    fprintf(stdout, "status       : ");
-    for (int i = 0; i < ptr->status.size; ++i)
+    printf("status       : 0x");
+    for (int i = 0; i < static_cast<int>(ptr->status.size); ++i)
     {
       printf("%02X", ptr->status.buf[i]);
     }
     printf("\n");
 
-    // fprintf(stdout, "      revision     : %ld\n", ptr->revision);
-    fprintf(stdout, "moy          : %ld\n", *ptr->moy);
-    fprintf(stdout, "timeStamp    : %ld\n", *ptr->timeStamp);
+    // printf("      revision     : %ld\n", ptr->revision);
+    printf("moy          : %ld\n", *ptr->moy);
+    printf("timeStamp    : %ld\n", *ptr->timeStamp);
       
-    if (ptr->enabledLanes) 
-    {
-      fprintf(stdout, "      enabledLanes : %ld\n", ptr->enabledLanes);
-    }
+    // if (ptr->enabledLanes) 
+    // {
+    //   printf("      enabledLanes : %ld\n", ptr->enabledLanes);
+    // }
       
     if (ptr->states.list.count) 
     {
-      fprintf(stdout, "states       : %ld items\n", ptr->states.list.count);
+      printf("states       : %d items\n", ptr->states.list.count);
         
       for (int j = 0; j < ptr->states.list.count; ++j) 
       {
-        fprintf(stdout, "  states[%ld]\n", j);
-        fprintf(stdout, "    movementName       : ");
+        printf("  states[%d]\n", j);
+        printf("    movementName       : ");
           
-        for (int l = 0; l < ptr->states.list.array[j]->movementName->size; ++l) 
+        for (int l = 0; l < static_cast<int>(ptr->states.list.array[j]->movementName->size); ++l) 
         {
-          fprintf(stdout, "%c", ptr->states.list.array[j]->movementName->buf[l]);
+          printf("%c", ptr->states.list.array[j]->movementName->buf[l]);
         }
           
-        fprintf(stdout, "\n");
-        fprintf(stdout, "    signalGroup        : %ld\n", ptr->states.list.array[j]->signalGroup);
+        printf("\n");
+        printf("    signalGroup        : %ld\n", ptr->states.list.array[j]->signalGroup);
           
         if (ptr->states.list.array[j]->state_time_speed.list.count) 
         {
-          fprintf(stdout, "    state-time-speed   : %ld items\n", ptr->states.list.array[j]->state_time_speed.list.count);
+          printf("    state-time-speed   : %d items\n", ptr->states.list.array[j]->state_time_speed.list.count);
             
           for (int k = 0; k < ptr->states.list.array[j]->state_time_speed.list.count; ++k) 
           {
             struct MovementEvent *mvevent_p = ptr->states.list.array[j]->state_time_speed.list.array[k];
             
-            fprintf(stdout, "      Item %ld\n", k);
-            fprintf(stdout, "        MovementEvent\n");
-            fprintf(stdout, "          eventState(%ld) : ", mvevent_p->eventState);
+            printf("      Item %d\n", k);
+            printf("        MovementEvent\n");
+            printf("          eventState(%ld) : ", mvevent_p->eventState);
             switch (mvevent_p->eventState)
             {
 							case e_MovementPhaseState::MovementPhaseState_unavailable:
-                fprintf(stdout, "unavailable\n");
+                printf("unavailable\n");
                 break;
 							case e_MovementPhaseState::MovementPhaseState_dark:
-                fprintf(stdout, "dark\n");
+                printf("dark\n");
                 break;
 							case e_MovementPhaseState::MovementPhaseState_stop_Then_Proceed:
-                fprintf(stdout, "stop_Then_Proceeddark\n");
+                printf("stop_Then_Proceeddark\n");
                 break;
 							case e_MovementPhaseState::MovementPhaseState_stop_And_Remain:
-                fprintf(stdout, "stop_And_Remain\n");
+                printf("stop_And_Remain\n");
                 break;
 							case e_MovementPhaseState::MovementPhaseState_pre_Movement:
-                fprintf(stdout, "pre_Movement\n");
+                printf("pre_Movement\n");
                 break;
 							case e_MovementPhaseState::MovementPhaseState_permissive_Movement_Allowed:
-								fprintf(stdout, "permissive_Movement_Allowed\n");
+								printf("permissive_Movement_Allowed\n");
                 break;
 							case e_MovementPhaseState::MovementPhaseState_protected_Movement_Allowed:
-								fprintf(stdout, "protected_Movement_Allowed\n");
+								printf("protected_Movement_Allowed\n");
                 break;
 							case e_MovementPhaseState::MovementPhaseState_permissive_clearance:
-								fprintf(stdout, "permissive_clearance\n");
+								printf("permissive_clearance\n");
                 break;
 							case e_MovementPhaseState::MovementPhaseState_protected_clearance:
-								fprintf(stdout, "protected_clearance\n");
+								printf("protected_clearance\n");
                 break;
 							case e_MovementPhaseState::MovementPhaseState_caution_Conflicting_Traffic:
-								fprintf(stdout, "caution_Conflicting_Traffic\n");
+								printf("caution_Conflicting_Traffic\n");
                 break;
 							default:
-								fprintf(stdout, "Impossible situation happened. please check this\n");
+								printf("Impossible situation happened. please check this\n");
                 exit(-1);
 						}
 
-            fprintf(stdout, "          timing\n");
-            fprintf(stdout, "            minEndTime : %ld\n", ptr->states.list.array[j]->state_time_speed.list.array[k]->timing->minEndTime);
+            printf("          timing\n");
+            printf("            minEndTime : %ld\n", ptr->states.list.array[j]->state_time_speed.list.array[k]->timing->minEndTime);
           }
         }
         // fprintf(stdout, "          regional           : %ld\n", ptr->states.list.array[j]->regional);
       
         if (ptr->states.list.array[j]->maneuverAssistList->list.count)
         {
-          fprintf(stdout, "    maneuverAssistList : %ld items\n", ptr->states.list.array[j]->maneuverAssistList->list.count);
+          printf("    maneuverAssistList : %d items\n", ptr->states.list.array[j]->maneuverAssistList->list.count);
         
           for (int j = 0; j < ptr->states.list.array[j]->maneuverAssistList->list.count; ++j) 
           {
-            fprintf(stdout, "      maneuverAssistList[%ld]\n", j);
-            fprintf(stdout, "        connectionID     : %ld\n",  ptr->states.list.array[j]->maneuverAssistList->list.array[j]->connectionID);
+            printf("      maneuverAssistList[%d]\n", j);
+            printf("        connectionID     : %ld\n",  ptr->states.list.array[j]->maneuverAssistList->list.array[j]->connectionID);
 
             if (ptr->states.list.array[j]->maneuverAssistList->list.array[j]->pedBicycleDetect)
             {
               if (*ptr->states.list.array[j]->maneuverAssistList->list.array[j]->pedBicycleDetect == true)
               {
-                fprintf(stdout, "        pedBicycleDetect : True\n");
+                printf("        pedBicycleDetect : True\n");
               }
               else
               {
-                fprintf(stdout, "        pedBicycleDetect : False\n");
+                printf("        pedBicycleDetect : False\n");
               }
             }
           }
@@ -427,7 +426,7 @@ int IchthusV2X::parse_spat(SPAT_t *spat)
   return 0;
 }
 
-/* TX_WAVE_UPER(_RESULT) */
+/* TX_WAVE_UPER(RESULT) */
 void IchthusV2X::sendPvd()
 {
   while(1)
@@ -458,33 +457,32 @@ int IchthusV2X::tx_v2i_pvd()
     return 0;
   }
 
-  // 이 부분 뭘까...?  
   txPvd += (interval - interval%PVD_INTERVAL); 
 
   MessageFrame_t msg;
   char uper[MAX_UPER_SIZE]; 
 
-  // 인코딩할 PVD 채우기
   fill_j2735_pvd(&msg);
 
   std::cout << ">> Parse J2735 : PVD <<" << endl;
   parse_pvd(&msg);
-  gen_PvdMsg(&msg);
+  gen_PvdMsg();
 
-  // pvd_pub_->publish(pvd_msg); /* for test */
+  // pvd_pub_->publish(pvd_msg); /* DEBUG */
 
-  // 인코딩
   int encodedBits = encode_j2735_uper(uper, &msg);
 
-  //printf("bits:%d\n",encodedBits);
-  if(encodedBits < 0) // 인코딩 실패로 전송이 불가능한 상태
+  // printf("bits:%d\n",encodedBits); /*DEBUG */
+
+  /* Encdoing Fail, unable to send */
+  if(encodedBits < 0)
   {
     return 0;
   }
     
   int byteLen = encodedBits / 8 + ((encodedBits % 8)? 1:0);
     
-  //print_hex(uper,byteLen);    
+  // print_hex(uper,byteLen); /* DEBUG */    
       
   return request_tx_wave_obu(uper,byteLen);  
 }
@@ -501,15 +499,15 @@ void IchthusV2X::print_hex(char *data, int len)
 
 int IchthusV2X::fill_j2735_pvd(MessageFrame_t *dst)
 {
-  // 현재 날짜, 시간
+  /* current day, time */
   time_t timer;
   struct tm *t;
   timer = time(NULL);
   t = localtime(&timer);
 
-  //ASN_STRUCT_RESET(asn_DEF_MessageFrame, dst);
+  // ASN_STRUCT_RESET(asn_DEF_MessageFrame, dst); /* DEBUG */
 
-  dst->messageId = 26; // J2735 표준문서 PDF 파일 참조 DE_DSRC_MessageID,  probeVehicleData DSRCmsgID ::= 26 -- PVD 
+  dst->messageId = 26; // Reference J2735.pdf - DE_DSRC_MessageID, probeVehicleData DSRCmsgID ::= 26 -- PVD 
   dst->value.present = MessageFrame__value_PR_ProbeVehicleData; // MessageFrame::value choice (asn1c)
 
   ProbeVehicleData_t *ptrPvd = &dst->value.choice.ProbeVehicleData;
@@ -518,32 +516,23 @@ int IchthusV2X::fill_j2735_pvd(MessageFrame_t *dst)
   ptrPvd->segNum = NULL;    // OPTIONAL, not to use
   ptrPvd->regional = NULL;  // OPTIONAL, not to use
 
-  // ptrPvd->probeID = malloc(sizeof(struct VehicleIdent));
   ptrPvd->probeID = new(struct VehicleIdent);
   ptrPvd->probeID->name = NULL;         // OPTIONAL, not to use
   ptrPvd->probeID->ownerCode = NULL;    // OPTIONAL, not to use
   ptrPvd->probeID->vehicleClass = NULL; // OPTIONAL, not to use
   ptrPvd->probeID->vin = NULL;          // OPTIONAL, not to use
   ptrPvd->probeID->vehicleType = NULL;  // OPTIONAL, not to use
-  // ptrPvd->probeID->id = malloc(sizeof (struct VehicleID));
+
   ptrPvd->probeID->id = new(struct VehicleID);
   ptrPvd->probeID->id->present = VehicleID_PR_entityID;   
   ptrPvd->probeID->id->present = VehicleID_PR_entityID;
   ptrPvd->probeID->id->choice.entityID.buf = (unsigned char *)malloc(4);
   ptrPvd->probeID->id->choice.entityID.size = 4; 
-  ptrPvd->probeID->id->choice.entityID.buf[0] = 0xCE;      // (INPUT) <---- 할당된 대학별 ID 입력
-  ptrPvd->probeID->id->choice.entityID.buf[1] = 0x24;      // (INPUT) <---- 할당된 대학별 ID 입력
-  ptrPvd->probeID->id->choice.entityID.buf[2] = 0x67;      // (INPUT) <---- 할당된 대학별 ID 입력
-  ptrPvd->probeID->id->choice.entityID.buf[3] = 0x04;      // (INPUT) <---- 할당된 대학별 ID 입력
+  ptrPvd->probeID->id->choice.entityID.buf[0] = 0xCE; // (INPUT) <---- 할당된 대학별 ID 입력
+  ptrPvd->probeID->id->choice.entityID.buf[1] = 0x24; // (INPUT) <---- 할당된 대학별 ID 입력
+  ptrPvd->probeID->id->choice.entityID.buf[2] = 0x67; // (INPUT) <---- 할당된 대학별 ID 입력
+  ptrPvd->probeID->id->choice.entityID.buf[3] = 0x04; // (INPUT) <---- 할당된 대학별 ID 입력
 
-  //StartVector : PVD를 전송할 시점을 기준의 시간과 차량의 위치, 이동상태 값을 반영  
-  // ptrPvd->startVector.utcTime = malloc(sizeof(struct DDateTime));  
-  // ptrPvd->startVector.utcTime->year = malloc(sizeof(DYear_t));
-  // ptrPvd->startVector.utcTime->month = malloc(sizeof(DMonth_t)); 
-  // ptrPvd->startVector.utcTime->day = malloc(sizeof(DDay_t)); 
-  // ptrPvd->startVector.utcTime->hour = malloc(sizeof(DHour_t)); 
-  // ptrPvd->startVector.utcTime->minute = malloc(sizeof(DMinute_t)); 
-  // ptrPvd->startVector.utcTime->second = malloc(sizeof(DSecond_t));
   ptrPvd->startVector.utcTime = new(struct DDateTime);  
   ptrPvd->startVector.utcTime->year = new DYear_t;
   ptrPvd->startVector.utcTime->month = new DMonth_t; 
@@ -554,15 +543,12 @@ int IchthusV2X::fill_j2735_pvd(MessageFrame_t *dst)
   ptrPvd->startVector.utcTime->offset = NULL; // OPTIONAL, not to use
 
   *ptrPvd->startVector.utcTime->year = t->tm_year+1900; // (INPUT) <--------------- 현재 UTC 시간 입력 (년도)
-  *ptrPvd->startVector.utcTime->month = t->tm_mon+1;   // (INPUT) <--------------- 현재 UTC 시간 입력 (년도)
-  *ptrPvd->startVector.utcTime->day = t->tm_mday;     // (INPUT) <--------------- 현재 UTC 시간 입력 (년도)
-  *ptrPvd->startVector.utcTime->hour = t->tm_hour;    // (INPUT) <--------------- 현재 UTC 시간 입력 (년도)
-  *ptrPvd->startVector.utcTime->minute = t->tm_min;  // (INPUT) <--------------- 현재 UTC 시간 입력 (년도)
-  *ptrPvd->startVector.utcTime->second = t->tm_sec;  // (INPUT) <--------------- 현재 UTC 시간 입력 (년도)
+  *ptrPvd->startVector.utcTime->month = t->tm_mon+1;    // (INPUT) <--------------- 현재 UTC 시간 입력 (년도)
+  *ptrPvd->startVector.utcTime->day = t->tm_mday;       // (INPUT) <--------------- 현재 UTC 시간 입력 (년도)
+  *ptrPvd->startVector.utcTime->hour = t->tm_hour;      // (INPUT) <--------------- 현재 UTC 시간 입력 (년도)
+  *ptrPvd->startVector.utcTime->minute = t->tm_min;     // (INPUT) <--------------- 현재 UTC 시간 입력 (년도)
+  *ptrPvd->startVector.utcTime->second = t->tm_sec;     // (INPUT) <--------------- 현재 UTC 시간 입력 (년도)
 
-  // ptrPvd->startVector.elevation = malloc(sizeof(DSRC_Elevation_t));
-  // ptrPvd->startVector.heading = malloc(sizeof(Heading_t));
-  // ptrPvd->startVector.speed = malloc(sizeof(struct TransmissionAndSpeed));
   ptrPvd->startVector.elevation = new DSRC_Elevation_t;
   ptrPvd->startVector.heading = new Heading_t;
   ptrPvd->startVector.speed = new (struct TransmissionAndSpeed);
@@ -578,7 +564,6 @@ int IchthusV2X::fill_j2735_pvd(MessageFrame_t *dst)
   ptrPvd->startVector.speed->speed = Vli_.speed;            // (INPUT) <--------------- 현재 차량의 속도        
   ptrPvd->startVector.speed->transmisson = Vli_.transmisson;// (INPUT) <--------------- 현재 차량의 변속기 상태          
 
-  // ptrPvd->vehicleType.hpmsType = malloc(sizeof(VehicleType_t));
   ptrPvd->vehicleType.hpmsType = new VehicleType_t;
   ptrPvd->vehicleType.keyType = NULL;       // OPTIONAL, not to use
   ptrPvd->vehicleType.fuelType = NULL;      // OPTIONAL, not to use
@@ -590,21 +575,11 @@ int IchthusV2X::fill_j2735_pvd(MessageFrame_t *dst)
   ptrPvd->vehicleType.vehicleType = NULL;   // OPTIONAL, not to use
   *ptrPvd->vehicleType.hpmsType = VehicleType_car; 
 
-  // PVD 전송 직전에 전송한 PVD startVector 시간, 위치, 이동상태를 입력 
   ptrPvd->snapshots.list.count = 1; 
-  // ptrPvd->snapshots.list.array = malloc(sizeof(struct Snapshot *));
-  // ptrPvd->snapshots.list.array[0] = malloc(sizeof(struct Snapshot));
   ptrPvd->snapshots.list.array = new (struct Snapshot *);
   ptrPvd->snapshots.list.array[0] = new (struct Snapshot);
   struct Snapshot *ptrSnapshot = ptrPvd->snapshots.list.array[0]; 
 
-  // ptrSnapshot->thePosition.utcTime = malloc(sizeof(struct DDateTime));
-  // ptrSnapshot->thePosition.utcTime->year = malloc(sizeof(DYear_t));
-  // ptrSnapshot->thePosition.utcTime->month = malloc(sizeof(DMonth_t));
-  // ptrSnapshot->thePosition.utcTime->day = malloc(sizeof(DDay_t));
-  // ptrSnapshot->thePosition.utcTime->hour = malloc(sizeof(DHour_t));
-  // ptrSnapshot->thePosition.utcTime->minute = malloc(sizeof(DMinute_t));
-  // ptrSnapshot->thePosition.utcTime->second = malloc(sizeof(DSecond_t));
   ptrSnapshot->thePosition.utcTime = new (struct DDateTime);
   ptrSnapshot->thePosition.utcTime->year = new DYear_t;
   ptrSnapshot->thePosition.utcTime->month = new DMonth_t;
@@ -614,9 +589,6 @@ int IchthusV2X::fill_j2735_pvd(MessageFrame_t *dst)
   ptrSnapshot->thePosition.utcTime->second = new DSecond_t;
   ptrSnapshot->thePosition.utcTime->offset = NULL; // OPTIONAL, not to use
 
-  // ptrSnapshot->thePosition.elevation = malloc(sizeof(DSRC_Elevation_t));
-  // ptrSnapshot->thePosition.speed = malloc(sizeof(struct TransmissionAndSpeed));
-  // ptrSnapshot->thePosition.heading = malloc(sizeof(Heading_t));
   ptrSnapshot->thePosition.elevation = new DSRC_Elevation_t;
   ptrSnapshot->thePosition.speed = new (struct TransmissionAndSpeed);
   ptrSnapshot->thePosition.heading = new Heading_t;
@@ -625,12 +597,12 @@ int IchthusV2X::fill_j2735_pvd(MessageFrame_t *dst)
   ptrSnapshot->thePosition.timeConfidence = NULL;  // OPTIONAL, not to use
   ptrSnapshot->thePosition.speedConfidence = NULL; // OPTIONAL, not to use
 
-  *ptrSnapshot->thePosition.utcTime->year = t->tm_year+1900;    // (INPUT) <--------------- 직전 전송한 PVD의 UTC 시간 입력 (년도)
-  *ptrSnapshot->thePosition.utcTime->month = t->tm_mon+1;       // (INPUT) <--------------- 직전 전송한 PVD의 UTC 시간 입력 (월)
-  *ptrSnapshot->thePosition.utcTime->day = t->tm_mday;          // (INPUT) <--------------- 직전 전송한 PVD의 UTC 시간 입력 (일)
-  *ptrSnapshot->thePosition.utcTime->hour = t->tm_hour;         // (INPUT) <--------------- 직전 전송한 PVD의 UTC 시간 입력 (시)
-  *ptrSnapshot->thePosition.utcTime->minute = t->tm_min;        // (INPUT) <--------------- 직전 전송한 PVD의 UTC 시간 입력 (분)
-  *ptrSnapshot->thePosition.utcTime->second = t->tm_sec;        // (INPUT) <--------------- 직전 전송한 PVD의 UTC 시간 입력 (초)
+  *ptrSnapshot->thePosition.utcTime->year = t->tm_year+1900; // (INPUT) <--------------- 직전 전송한 PVD의 UTC 시간 입력 (년도)
+  *ptrSnapshot->thePosition.utcTime->month = t->tm_mon+1;    // (INPUT) <--------------- 직전 전송한 PVD의 UTC 시간 입력 (월)
+  *ptrSnapshot->thePosition.utcTime->day = t->tm_mday;       // (INPUT) <--------------- 직전 전송한 PVD의 UTC 시간 입력 (일)
+  *ptrSnapshot->thePosition.utcTime->hour = t->tm_hour;      // (INPUT) <--------------- 직전 전송한 PVD의 UTC 시간 입력 (시)
+  *ptrSnapshot->thePosition.utcTime->minute = t->tm_min;     // (INPUT) <--------------- 직전 전송한 PVD의 UTC 시간 입력 (분)
+  *ptrSnapshot->thePosition.utcTime->second = t->tm_sec;     // (INPUT) <--------------- 직전 전송한 PVD의 UTC 시간 입력 (초)
   
   ptrSnapshot->thePosition.lat = Vli_.latitude;                   // (INPUT) <--------------- 현재 차량의 위치 (위도) (Longitude, DD 좌표계)
   ptrSnapshot->thePosition.Long = Vli_.longitude;                 // (INPUT) <--------------- 현재 차량의 위치 (경도) (Latitude,  DD 좌표계) 
@@ -642,11 +614,10 @@ int IchthusV2X::fill_j2735_pvd(MessageFrame_t *dst)
   return 0;
 }
 
-void IchthusV2X::gen_PvdMsg(MessageFrame_t *pvd)
+/* DEBUG */
+void IchthusV2X::gen_PvdMsg()
 {
-
   pvd_msg.msg_type = 5;
-
 }
 
 int IchthusV2X::parse_pvd(MessageFrame_t *pvd)
@@ -656,9 +627,9 @@ int IchthusV2X::parse_pvd(MessageFrame_t *pvd)
   printf("ProbeID\n");
   printf("  id\n");
   printf("    entityID    : %02X:%02X:%02X:%02X\n", ptrPvd->probeID->id->choice.entityID.buf[0],
-                                                 ptrPvd->probeID->id->choice.entityID.buf[1],
-                                                 ptrPvd->probeID->id->choice.entityID.buf[2],
-                                                 ptrPvd->probeID->id->choice.entityID.buf[3]);
+                                                    ptrPvd->probeID->id->choice.entityID.buf[1],
+                                                    ptrPvd->probeID->id->choice.entityID.buf[2],
+                                                    ptrPvd->probeID->id->choice.entityID.buf[3]);
   printf("startVector\n");
   printf("  utcTime\n");
   printf("    year        : %ld\n", *ptrPvd->startVector.utcTime->year);
@@ -727,24 +698,26 @@ int IchthusV2X::parse_pvd(MessageFrame_t *pvd)
 
 int IchthusV2X::encode_j2735_uper(char *dst, MessageFrame_t *src)
 {
-  int res = -1;
+  // int res = -1;
 
   asn_enc_rval_t ret = uper_encode_to_buffer(&asn_DEF_MessageFrame,
                                               NULL,
                                               src,
                                               dst, MAX_UPER_SIZE);
-    
+
+  /* UPER Encoding Success */ 
   if (ret.encoded > 0)
   {
-    return ret.encoded; //  UPER Encoding Success
+    return ret.encoded;
   }
+  /* UPER Encoding Failed */
   else
   { 
     if (ret.failed_type != NULL)
     {
       std::cout << "encoded error value name = " << ret.failed_type->name << std::endl;
     }
-    return -1; // UPER Encoding failed
+    return -1;
   }
 }
 
@@ -769,6 +742,12 @@ int IchthusV2X::request_tx_wave_obu(char *uper, unsigned short uperLength)
 
   int res = write(sockFd, packet, packetLen);
 
+  /* PVD Hz DEBUG */
+  // time_t timer1;
+  // struct tm *t1;
+  // timer1 = time(NULL);
+  // RCLCPP_INFO(this->get_logger(), "send time : %ld\n",timer1);
+
   if (res > 0)
   {
     printf("TX - \"TX_WAVE_UPER\" SEQ[%d] = ", ptrHeader->seq);
@@ -784,13 +763,16 @@ int IchthusV2X::request_tx_wave_obu(char *uper, unsigned short uperLength)
       return res;
     }
   }
+
+  return 0;
 }
 
 void IchthusV2X::sigint_handler(int sig)
 {  
-	fprintf(stdout,"done !\n");
-	done = true;  
-} 
+	// fprintf(stdout,"done !\n");
+  std::cout << "done!" << std::endl;
+  done = true;
+}
 
 void IchthusV2X::install_signal_handler(void)
 {
@@ -800,10 +782,12 @@ void IchthusV2X::install_signal_handler(void)
   sa.sa_handler = sigint_handler;
 
   if (sigaction(SIGINT, &sa, NULL) < 0) {
-    fprintf(stderr,"ctrl+c sigint install failed \n");
+    // fprintf(stderr,"ctrl+c sigint install failed \n");
+    std::cout << "ctrl+c sigint install failed" << std::endl;
     exit(-1);
   }
-  fprintf(stdout,"Press <Ctrl-C> to exit\n");
+  // fprintf(stdout,"Press <Ctrl-C> to exit\n");
+  std::cout << "Press <Ctrl-C> to exit" << std::endl;
 }
 
 }
@@ -813,7 +797,6 @@ int main(int argc, char *argv[])
   rclcpp::init(argc, argv);
   auto node = std::make_shared<ichthus_v2x::IchthusV2X>();
   
-  // rclcpp::spin(node);
   rclcpp::Rate rate(5);
   while(rclcpp::ok())
   {

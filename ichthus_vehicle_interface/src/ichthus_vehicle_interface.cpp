@@ -5,32 +5,34 @@ namespace ichthus_vehicle_interface
     IchthusVehicleInterfaceNode::IchthusVehicleInterfaceNode()
         : Node("ichthus_vehicle_interface")
     {
-        pub_ref_ang = this->create_publisher<std_msgs::msg::Float64>("ref_ang", 10);
-        pub_ref_vel = this->create_publisher<std_msgs::msg::Float64>("ref_vel", 10);
+        pub_ref_ang = this->create_publisher<ichthus_msgs::msg::Common>("ref_ang", 1);
+        pub_ref_vel = this->create_publisher<ichthus_msgs::msg::Common>("ref_vel", 1);
 
         pub_velocity_report_ = this->create_publisher<autoware_auto_vehicle_msgs::msg::VelocityReport>("/output/velocity_report", rclcpp::QoS{1});
         pub_steering_report_ = this->create_publisher<autoware_auto_vehicle_msgs::msg::SteeringReport>("/output/steering_report", rclcpp::QoS{1});
 
         pub_yaw = this->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("can_odom", 1);
-        pub_mps = this->create_publisher<std_msgs::msg::Float64>("can_mps", 1);
 
-        pub_cur_ang = this->create_publisher<std_msgs::msg::Float64>("cur_ang", 1);
-        pub_cur_vel = this->create_publisher<std_msgs::msg::Float64>("cur_vel", 1);
         pub_v2x = this->create_publisher<std_msgs::msg::Float64MultiArray>("v2x", 1);
 
         sub_ctrl_cmd = this->create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>("/input/control_cmd", rclcpp::QoS{1}\
                             ,std::bind(&IchthusVehicleInterfaceNode::ctrlCmdCB, this, _1));
         sub_odom = this->create_subscription<ichthus_msgs::msg::Can>("odom_raw",rclcpp::QoS{1}\
                             ,std::bind(&IchthusVehicleInterfaceNode::odomCB, this, _1));
-        
-        // use_raw_odom = this->declare_parameter<bool>("use_raw_odom", false);
 
-        // if(use_raw_odom)
-        // {
-        //     sub_ESP = this->create_subscription<std_msgs::msg::Float64MultiArray>("ESP12", rclcpp::QoS{1}, std::bind(&IchthusVehicleInterfaceNode::callback_ESP, this, _1));
-        //     sub_SPD = this->create_subscription<std_msgs::msg::Float64MultiArray>("WHL_SPD11", rclcpp::QoS{1}, std::bind(&IchthusVehicleInterfaceNode::callback_SPD, this, _1));
-        //     sub_SAS = this->create_subscription<std_msgs::msg::Float64MultiArray>("SAS11", rclcpp::QoS{1}, std::bind(&IchthusVehicleInterfaceNode::callback_SAS, this, _1));
-        // }
+        // pub_mps = this->create_publisher<std_msgs::msg::Float64>("can_mps", 1);
+
+        // pub_cur_ang = this->create_publisher<std_msgs::msg::Float64>("cur_ang", 1);
+        // pub_cur_vel = this->create_publisher<std_msgs::msg::Float64>("cur_vel", 1);
+        
+        use_raw_odom = this->declare_parameter<bool>("use_raw_odom", false);
+
+        if(use_raw_odom)
+        {
+            sub_ESP = this->create_subscription<std_msgs::msg::Float64MultiArray>("ESP12", rclcpp::QoS{1}, std::bind(&IchthusVehicleInterfaceNode::callback_ESP, this, _1));
+            sub_SPD = this->create_subscription<std_msgs::msg::Float64MultiArray>("WHL_SPD11", rclcpp::QoS{1}, std::bind(&IchthusVehicleInterfaceNode::callback_SPD, this, _1));
+            sub_SAS = this->create_subscription<std_msgs::msg::Float64MultiArray>("SAS11", rclcpp::QoS{1}, std::bind(&IchthusVehicleInterfaceNode::callback_SAS, this, _1));
+        }
     }
 
      void IchthusVehicleInterfaceNode::callback_SAS(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
@@ -45,7 +47,7 @@ namespace ichthus_vehicle_interface
 
     void IchthusVehicleInterfaceNode::callback_SPD(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
     {
-        temp_cur_vel = (msg->data[0] + msg->data[1] + msg->data[2] + msg->data[3]) / 4.0;
+        temp_cur_vel = (msg->data[0] + msg->data[1]) / 2.0;
     }
 
     void IchthusVehicleInterfaceNode::publish_status_from_raw_odom()
@@ -73,9 +75,11 @@ namespace ichthus_vehicle_interface
 
     void IchthusVehicleInterfaceNode::ctrlCmdCB(
             const autoware_auto_control_msgs::msg::AckermannControlCommand::SharedPtr msg){
-        std_msgs::msg::Float64 vel;
-        std_msgs::msg::Float64 ang;
+        ichthus_msgs::msg::Common vel;
+        ichthus_msgs::msg::Common ang;
 
+        vel.header.stamp = msg->stamp;
+        ang.header.stamp = msg->stamp;
         vel.data = MPStoKMPH(msg->longitudinal.speed);
         ang.data = RADtoDEG(msg->lateral.steering_tire_angle) * STEERING_GEAR_RATIO; // is this rad?
 
@@ -148,12 +152,12 @@ namespace ichthus_vehicle_interface
         pub_velocity_report_->publish(*velocity_report_msg);
         pub_steering_report_->publish(*steering_report_msg);
         pub_yaw->publish(*twist_covariance_msg);
-        pub_mps->publish(*velocity_mps_msg);
 
-        cur_vel_msg->data = cur_velocity;
-        cur_ang_msg->data = steer_wheel_angle;
-        pub_cur_vel->publish(*cur_vel_msg);
-        pub_cur_ang->publish(*cur_ang_msg);
+        // pub_mps->publish(*velocity_mps_msg);
+        // cur_vel_msg->data = cur_velocity;
+        // cur_ang_msg->data = steer_wheel_angle;
+        // pub_cur_vel->publish(*cur_vel_msg);
+        // pub_cur_ang->publish(*cur_ang_msg);
 
         v2x_msg->data.push_back(KMPHtoMPS(cur_velocity));
         v2x_msg->data.push_back(cur_gear);

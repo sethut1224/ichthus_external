@@ -11,6 +11,8 @@
 // For control msg
 #include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
 #include "ichthus_msgs/msg/can.hpp"
+#include "ichthus_msgs/msg/common.hpp"
+
 
 using std::placeholders::_1;
 
@@ -19,7 +21,7 @@ using std::placeholders::_1;
 #define DEGtoRAD(deg) ((deg) * (0.017453))
 #define RADtoDEG(rad) ((rad) / (0.017453))
 
-#define STEERING_GEAR_RATIO 12.95
+#define STEERING_GEAR_RATIO 13.3
 
 #define STR_ANG_IDX   0     //  deg
 #define STR_VEL_IDX   1     //  deg/s or deg/h
@@ -40,8 +42,8 @@ namespace ichthus_vehicle_interface
                 pub_velocity_report_;
             rclcpp::Publisher <autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr \
                 pub_steering_report_;
-            rclcpp::Publisher <std_msgs::msg::Float64>::SharedPtr pub_ref_vel;
-            rclcpp::Publisher <std_msgs::msg::Float64>::SharedPtr pub_ref_ang;
+            rclcpp::Publisher <ichthus_msgs::msg::Common>::SharedPtr pub_ref_vel;
+            rclcpp::Publisher <ichthus_msgs::msg::Common>::SharedPtr pub_ref_ang;
 
 
             rclcpp::Publisher <std_msgs::msg::Float64>::SharedPtr pub_cur_vel;

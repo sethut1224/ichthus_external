@@ -8,7 +8,7 @@
     <arg name='control' default='true'/>
     
     <arg name='use_raw_odom' default='false' />
-    <arg name='use_imu' default='false'/>
+    <arg name='use_imu' default='true'/>
     <arg name='use_gnss' default='true'/>
     <arg name='use_camera' default='false' />
     <arg name='use_multi_lidar' default='false'/>
@@ -16,16 +16,26 @@
 
     <arg name='use_pointcloud_map' default='true'/>
     <arg name='use_lanelet2_map' default='true' />
-    <arg name='use_fake_objects' default='true' />
+    <arg name='use_fake_objects' default='false' />
+
+    <!-- note: use only one option (GNSS or NDT) -->
+    <arg name='use_gnss_localization' default='false' />
+    <arg name='use_ndt_localization' default='true' />
+
     <!-- <arg name='pointcloud_map' default='/root/shared_dir/map/kcity/kcity_vg0.2.pcd'/>
     <arg name='lanelet2_map' default='/root/shared_dir/map/kcity/kcity.osm'/> -->
     <!-- <arg name='pointcloud_map' default='/root/shared_dir/map/soongsil/soongsil_vg0.2.pcd'/>
     <arg name='lanelet2_map' default='/root/shared_dir/map/soongsil/soongsil.osm'/> -->
     <!-- <arg name='pointcloud_map' default='/root/shared_dir/map/kiapi/highway_merged_vg0.1.pcd'/> -->
+
     <!-- <arg name='pointcloud_map' default='/root/shared_dir/map/kiapi/city_vg0.1.pcd'/>
-    <arg name='lanelet2_map' default='/root/shared_dir/map/kiapi/city.osm'/> -->
-    <arg name='pointcloud_map' default='/root/shared_dir/map/kiapi/city_vg0.1.pcd'/>
-    <arg name='lanelet2_map' default='/root/shared_dir/map/kiapi/city_latest.osm'/>
+    <arg name='lanelet2_map' default='/root/shared_dir/map/kiapi/city_0621.osm'/> -->
+
+    <arg name='pointcloud_map' default='/root/shared_dir/map/kiapi/highway_vg0.1.pcd'/>
+    <arg name='lanelet2_map' default='/root/shared_dir/map/kiapi/highway_lanechange_v1.3_fixz.osm'/>
+
+    <!-- <arg name='pointcloud_map' default='/root/shared_dir/map/kiapi/slope_vg0.1.pcd'/>
+    <arg name='lanelet2_map' default='/root/shared_dir/map/kiapi/slope.osm'/> -->
 
     <arg name='urdf_file_path' default="$(find-pkg-share ichthus_launch)/urdf/ichthus_NiroEV.urdf"/>
     <arg name='vehicle_info_param_path' default="$(find-pkg-share ichthus_launch)/param/ichthus_vehicle_info.param.yaml" />
@@ -43,6 +53,7 @@
       <arg name='setup_type' value='CENTER'/>
       <arg name="use_sim_time" value='$(var use_sim_time)' />
     </include>
+
     <include file='$(find-pkg-share ichthus_v2x)/launch/ichthus_v2x.launch.py' if='$(var use_v2x)'/>
 
     <include file="$(find-pkg-share ichthus_launch)/launch/ichthus/ichthus_map.launch.py" if='$(var map)'>
@@ -80,6 +91,8 @@
       <arg name='vehicle_info_param_path' value='$(var vehicle_info_param_path)' />
       <arg name='use_imu' value='$(var use_imu)' />
       <arg name='raw_pointcloud_topic' value='$(var localization_raw_pointcloud_topic)' />
+      <arg name='use_gnss_localization' value='$(var use_gnss_localization)' />
+      <arg name='use_ndt_localization' value='$(var use_ndt_localization)' />
     </include>
 
     <arg name ="lidar_channel" default="16"/>

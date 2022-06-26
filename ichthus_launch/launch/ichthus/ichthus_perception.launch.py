@@ -149,7 +149,7 @@ class Perception:
             parameters=[
                 lidar_centerpoint_param,
                 {
-                    'score_threshold' : 0.4,
+                    'score_threshold' : 0.6,
                     'densification_world_frame_id' : 'map',
                     'densification_num_past_frames' : 1,
                     'trt_precision' : 'fp16',
