@@ -15,6 +15,8 @@ namespace ichthus_vehicle_interface
 
         pub_v2x = this->create_publisher<std_msgs::msg::Float64MultiArray>("v2x", 1);
 
+        pub_turn_indicators = this->create_publisher<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>("/vehicle/status/turn_indicators_status",10);
+
         sub_ctrl_cmd = this->create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>("/input/control_cmd", rclcpp::QoS{1}\
                             ,std::bind(&IchthusVehicleInterfaceNode::ctrlCmdCB, this, _1));
         sub_odom = this->create_subscription<ichthus_msgs::msg::Can>("odom_raw",rclcpp::QoS{1}\
@@ -105,6 +107,9 @@ namespace ichthus_vehicle_interface
             new std_msgs::msg::Float64);
 
 
+        uint8_t left_light = 0;
+        uint8_t right_light = 0;
+
         for(size_t i = 0; i < msg->can_data.size(); i++)
         {
             if(msg->can_names[i] == "STR_ANG")
@@ -122,6 +127,16 @@ namespace ichthus_vehicle_interface
             else if(msg->can_names[i] == "GEAR")
             {
                 cur_gear = msg->can_data[i];
+            }
+
+            else if(msg->can_names[i] == "RIGHT_LIGHT")
+            {
+                right_light = static_cast<uint8_t>(msg->can_data[i]);
+            }
+
+            else if(msg->can_names[i] == "LEFT_LIGHT")
+            {
+                left_light = static_cast<uint8_t>(msg->can_data[i]);
             }
         }
         
@@ -152,7 +167,24 @@ namespace ichthus_vehicle_interface
         pub_velocity_report_->publish(*velocity_report_msg);
         pub_steering_report_->publish(*steering_report_msg);
         pub_yaw->publish(*twist_covariance_msg);
+        
+        autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport indicators_msg;
+        if(left_light == 1)
+        {
+            indicators_msg.report = 2;
+        }
 
+        else if(right_light == 1)
+        {
+            indicators_msg.report =3;
+        }
+
+        else
+        {
+            indicators_msg.report = 1;
+        }
+        
+        pub_turn_indicators->publish(indicators_msg);
         // pub_mps->publish(*velocity_mps_msg);
         // cur_vel_msg->data = cur_velocity;
         // cur_ang_msg->data = steer_wheel_angle;

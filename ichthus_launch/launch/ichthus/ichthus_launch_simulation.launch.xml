@@ -1,0 +1,103 @@
+<launch>
+    <arg name="map" default="true"/>
+    <arg name="system" default="true"/>
+    <arg name="sensing" default="true"/>
+    <arg name='localization' default='true'/>
+    <arg name="perception" default="true"/>
+    <arg name="planning" default="true"/>
+    <arg name='control' default='true'/>
+    
+    <arg name='use_raw_odom' default='false' />
+    <arg name='use_imu' default='false'/>
+    <arg name='use_gnss' default='true'/>
+    <arg name='use_camera' default='false' />
+    <arg name='use_multi_lidar' default='false'/>
+    <arg name='use_pointcloud_map' default='true'/>
+    <arg name='use_lanelet2_map' default='true' />
+    <arg name='use_lane_keeping_planner' default='true'/>
+    <!-- <arg name='use_fake_objects' default='true' /> -->
+
+    
+    <arg name='pointcloud_map' default='/root/shared_dir/map/kiapi/highway_vg0.1.pcd'/>
+    <arg name='lanelet2_map' default='/root/shared_dir/map/kiapi/highway_lanechange_v1.3_fixz.osm'/>
+
+    <!-- <arg name='pointcloud_map' default='/root/shared_dir/sample-map-planning/pointcloud_map.pcd'/>
+    <arg name='lanelet2_map' default='/root/shared_dir/sample-map-planning/lanelet2_map.osm'/> -->
+
+    <arg name='urdf_file_path' default="$(find-pkg-share ichthus_launch)/urdf/ichthus_NiroEV.urdf"/>
+    <arg name='vehicle_info_param_path' default="$(find-pkg-share ichthus_launch)/param/ichthus_vehicle_info.param.yaml" />
+
+    <arg name='detection_raw_pointcloud_topic' default='/merged_cloud' />
+    <arg name='localization_raw_pointcloud_topic' default='/merged_cloud' />
+    <arg name='kinematic_state' default='/localization/kinematic_state' />
+
+    <arg name='projector_type' default='MGRS' />
+    <arg name='yolo_type' default='yolov5m'/>
+    <arg name='use_gnss_localization' default='false' />
+    <arg name='use_sim_time' default='false' />
+    
+    <node pkg="topic_tools" exec="relay" name="initial_pose_2d">
+      <param name="input_topic" value="/initialpose"/>
+      <param name="output_topic" value="/initialpose2d"/>
+      <param name="type" value="geometry_msgs/msg/PoseWithCovarianceStamped"/>
+    </node>
+
+    <include file="$(find-pkg-share ichthus_launch)/launch/ichthus/ichthus_map.launch.py" if='$(var map)'>
+      <arg name='use_sim_time' value='$(var use_sim_time)' />
+      <arg name='use_pointcloud_map' value='$(var use_pointcloud_map)'/>
+      <arg name='use_lanelet2_map' value='$(var use_lanelet2_map)' />
+      <arg name='projector_type' value='$(var projector_type) '/>
+      <arg name='lanelet2_map' value='$(var lanelet2_map)'/>
+      <arg name='pointcloud_map' value='$(var pointcloud_map)'/>
+    </include>
+
+    <include file="$(find-pkg-share ichthus_launch)/launch/ichthus/ichthus_system.launch.py" if='$(var system)'>
+      <arg name='urdf_file_path' value='$(var urdf_file_path)' />
+      <arg name='use_sim_time' value='$(var use_sim_time)' />
+      <arg name='lgsvl' value='true' />
+      <arg name='use_raw_odom' value='$(var use_raw_odom)' />
+    </include>
+
+    <arg name ="lidar_channel" default="16"/>
+    <arg if="$(eval &quot; '$(var lidar_channel)' =='16'&quot;)" name="base_name" default="vlp-16"/>
+    <arg if="$(eval &quot; '$(var lidar_channel)' =='64'&quot;)" name="base_name" default="hdl-64"/>
+
+
+    <node pkg="dummy_perception_publisher" exec="empty_objects_publisher" name="empty_objects_publisher" output="screen">
+        <remap from="~/output/objects" to="/perception/object_recognition/objects"/>
+    </node>
+
+    <include file="$(find-pkg-share dummy_perception_publisher)/launch/dummy_perception_publisher.launch.xml">
+      <arg name="real" value="false"/>
+      <arg name="use_object_recognition" value="false"/>
+      <arg name="visible_range" value="100.0"/>
+    </include>
+
+    <include file="$(find-pkg-share tier4_perception_launch)/launch/occupancy_grid_map/laserscan_based_occupancy_grid_map.launch.py">
+      <arg name="input_obstacle_pointcloud" value="true"/>
+      <arg name="input_obstacle_and_raw_pointcloud" value="false"/>
+      <arg name="input/obstacle_pointcloud" value="/perception/obstacle_segmentation/pointcloud"/>
+      <arg name="output" value="/perception/occupancy_grid_map/map"/>
+    </include>
+
+    <include file="$(find-pkg-share ichthus_launch)/launch/ichthus/ichthus_planning.launch.py" if='$(var planning)'>
+      <arg name='use_sim_time' value='$(var use_sim_time)' />
+      <arg name='vehicle_info_param_path' value='$(var vehicle_info_param_path)' />
+      <arg name='kinematic_state' value='$(var kinematic_state)' />
+      <arg name='use_lane_keeping_planner' value='$(var use_lane_keeping_planner)'/>
+    </include>
+
+    <include file="$(find-pkg-share ichthus_launch)/launch/ichthus/ichthus_control_test.launch.py" if='$(var control)'>
+      <arg name='use_sim_time' value='$(var use_sim_time)' />
+      <arg name='vehicle_info_param_path' value='$(var vehicle_info_param_path)' />
+      <arg name='kinematic_state' value='$(var kinematic_state)' />
+    </include>
+
+    <let name="vehicle_model_pkg" value="$(find-pkg-share sample_vehicle_description)"/>
+    <arg name="simulator_model" default="$(var vehicle_model_pkg)/config/simulator_model.param.yaml" description="path to the file of simulator model"/>
+    <include file="$(find-pkg-share ichthus_launch)/launch/ichthus/ichthus_simulation.launch.py">
+        <arg name="simulator_model_param_file" value="$(var simulator_model)"/>
+        <arg name="initial_engage_state" value="true"/>
+    </include>
+
+</launch>

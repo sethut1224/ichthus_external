@@ -13,7 +13,7 @@
 #include "ichthus_msgs/msg/can.hpp"
 #include "ichthus_msgs/msg/common.hpp"
 
-
+#include "autoware_auto_vehicle_msgs/msg/turn_indicators_report.hpp"
 using std::placeholders::_1;
 
 #define KMPHtoMPS(kmph) ((kmph) / (3.6))
@@ -55,6 +55,7 @@ namespace ichthus_vehicle_interface
 
             rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_v2x;
 
+            rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>::SharedPtr pub_turn_indicators;
             // rclcpp::Subscription
             rclcpp::Subscription<ichthus_msgs::msg::Can>::SharedPtr sub_odom;
             rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr \
