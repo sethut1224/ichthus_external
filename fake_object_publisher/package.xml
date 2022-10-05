@@ -31,7 +31,7 @@
   <depend>tier4_perception_msgs</depend>
   <depend>unique_identifier_msgs</depend>
   <depend>dummy_object_publisher</depend>
-
+  <depend>dummy_perception_publisher</depend>
   <member_of_group>rosidl_interface_packages</member_of_group>
 
   <export>
