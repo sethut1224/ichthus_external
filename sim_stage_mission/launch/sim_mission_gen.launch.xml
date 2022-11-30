@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+
+<!-- ===========================================================================
+Copyright 2022. The ICHTHUS Project. All Rights Reserved.
+Eunseo Choi (eunseo.choi.d@gmail.com) and Kanghee Kim (kim.kanghee@gmail.com).
+Mobility Intelligence & Computing Systems Laboratory, Soongsil University.
+[Licensed under the Apache License, Version 2.0]
+=========================================================================== -->
+
+<launch>
+  <arg name="mission_type" default="AM"/> <!-- AM or PM -->
+  <arg name="save_dir" default="/autoware/src/external/make_mission_route/sim_stage_mission/test_scenario/am/"/>
+  
+  <node pkg="sim_stage_mission" exec="sim_mission_gen" name="sim_mission_gen" output="screen">
+    <param name="mission_type" value="$(var mission_type)"/>
+    <param name="save_dir" value="$(var save_dir)"/>
+  </node>
+</launch>
