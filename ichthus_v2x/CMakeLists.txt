@@ -1,3 +1,13 @@
+#  ===========================================================================
+#  Copyright 2022. The ICHTHUS Project. All Rights Reserved.
+#  Sumin In (ism0705@naver.com),
+#  Youngjun Han (young@ssu.ac.kr)
+#  Vision System Laboratory, Soongsil University.
+#  added by ICHTHUS, Sumin In on 20221026
+#  [Licensed under the MIT License]  
+#  ===========================================================================
+
+
 ################################################################################
 # Set minimum required version of cmake, project name and compile options
 ################################################################################
@@ -28,6 +38,9 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(kiapi_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(autoware_cmake REQUIRED)
+
+autoware_package()
 
 include_directories(include
   ${CMAKE_CURRENT_SOURCE_DIR}/include/asn
@@ -37,8 +50,12 @@ include_directories(include
 link_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/src/)
 
-add_executable(ichthus_v2x src/ichthus_v2x_main.cpp)
+add_executable(ichthus_v2x 
+  src/node.cpp
+  src/main.cpp
+)
 ament_target_dependencies(ichthus_v2x
+  autoware_auto_perception_msgs
   geometry_msgs
   std_msgs
   sensor_msgs

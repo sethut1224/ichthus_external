@@ -1,0 +1,2 @@
+uint8 item_id
+uint8 item_type

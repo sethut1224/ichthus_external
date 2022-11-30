@@ -28,7 +28,9 @@ V2X ROS2 node of Soongsil University, Ichthus
 
 #### Pubs
 * ```/v2x_info``` ([kiapi_msgs/msg/V2xinfo](https://github.com/simfrog/2022-kiapi_msgs/blob/main/msg/V2xinfo.msg))  
-  Information of SPaT messages  
+  Information of SPaT messages (FAKE)  
+* ```/external/traffic_light_recognition/traffic_signals``` (autoware_auto_perception_msgs/msg/TrafficSignalArray)  
+  Information of SPaT messages (REAL)  
 * ```/pvd_info``` ([kiapi_msgs/msg/Pvdinfo](https://github.com/simfrog/2022-kiapi_msgs/blob/main/msg/Pvdinfo.msg))  
   Information of PVD messages -  *DEBUG*
 
