@@ -1,11 +1,20 @@
+<!-- ===========================================================================
+Copyright 2022. The ICHTHUS Project. All Rights Reserved.
+Sumin In (ism0705@naver.com),
+Youngjun Han (young@ssu.ac.kr)
+Vision System Laboratory, Soongsil University.
+added by ICHTHUS, Sumin In on 20221026
+[Licensed under the MIT License]  
+=========================================================================== -->
+
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>kiapi_msgs</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="sumin@todo.todo">sumin</maintainer>
-  <license>TODO: License declaration</license>
+  <description>kiapi_msgs package for ros2</description>
+  <maintainer email="ism0705@naver.com">sumin In</maintainer>
+  <license>Apach 2</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

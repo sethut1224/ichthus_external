@@ -1,0 +1,13 @@
+<!--===========================================================================
+    Copyright 2022. The ICHTHUS Project. All Rights Reserved.
+    Jaemin Lee (xoz1206@gmail.com),
+    Youngjun Han (young@ssu.ac.kr)
+    Vision System Laboratory, Soongsil University.
+    added by ICHTHUS, Jaemin Lee on 20221026
+    [Licensed under the MIT License]  
+    ===========================================================================--> 
+
+<?xml version="1.0"?>
+<launch>
+    <node pkg="mission_manager_am" exec="mission_manager_am" name="mission_manager_am" output="screen"></node>
+</launch>

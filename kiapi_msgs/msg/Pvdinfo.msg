@@ -1,3 +1,5 @@
 builtin_interfaces/Time stamp
 
-int32 msg_type
+int32 latitude
+int32 longitude
+uint16 heading

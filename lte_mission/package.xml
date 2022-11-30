@@ -1,0 +1,35 @@
+<!-- ===========================================================================
+Copyright 2022. The ICHTHUS Project. All Rights Reserved.
+Sumin In (ism0705@naver.com),
+Youngjun Han (young@ssu.ac.kr)
+Vision System Laboratory, Soongsil University.
+added by ICHTHUS, Sumin In on 20221026
+[Licensed under the MIT License]  
+=========================================================================== -->
+
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>lte_mission</name>
+  <version>0.0.0</version>
+  <description>lte_mission package for ros2</description>
+  <maintainer email="ism0705@naver.com">sumin</maintainer>
+  <license>Apach 2</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <build_depend>rosidl_default_generators</build_depend>
+
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>kiapi_msgs</depend>
+
+  <test_depend>ament_cmake_ros</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <member_of_group>rosidl_interface_packages</member_of_group>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

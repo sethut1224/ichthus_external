@@ -1,96 +1,71 @@
-#include "ichthus_v2x/ichthus_v2x.hpp"
+/*  ===========================================================================
+    Copyright 2022. The ICHTHUS Project. All Rights Reserved.
+    Sumin In (ism0705@naver.com),
+    Youngjun Han (young@ssu.ac.kr)
+    Vision System Laboratory, Soongsil University.
+    added by ICHTHUS, Sumin In on 20221026
+    [Licensed under the MIT License]  
+    ===========================================================================*/
+
+#include "ichthus_v2x/node.hpp"
 
 
 namespace ichthus_v2x
 {
 
-rclcpp::Time prev_time;
 bool done = false;
-bool is_first_topic = true;
 
 IchthusV2X::IchthusV2X() : Node("ichthus_v2x") 
 {
-  install_signal_handler();
-  auto qos_profile = rclcpp::QoS(rclcpp::KeepLast(10));
-  v2x_pub_ = this->create_publisher<kiapi_msgs::msg::V2xinfo>("v2x_info", qos_profile);
-  loc_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>("/fix", 
-              qos_profile,
-              std::bind(&IchthusV2X::GnssCallback, this, std::placeholders::_1));
-  gnss_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("/gnss_pose", 
-              qos_profile,
-              std::bind(&IchthusV2X::GnssPoseCallback, this, std::placeholders::_1));
-  vel_sub_ = this->create_subscription<std_msgs::msg::Float64MultiArray>("/v2x", qos_profile,
-              std::bind(&IchthusV2X::VelocityCallback, this, std::placeholders::_1));
-  // pvd_pub_ = this->create_publisher<kiapi_msgs::msg::Pvdinfo>("pvd_info", qos_profile); /* DEBUG */
-  // loc_sub_ = this->create_subscription<kiapi_msgs::msg::Mylocation>("gnss_info", qos_profile,
-  //             std::bind(&IchthusV2X::LocationCallback, this, std::placeholders::_1));   /* DEBUG */
-  // ori_sub_ = this->create_subscription<sensor_msgs::msg::Imu>("/imu/data", qos_profile, /* DEBUG */
-  //             std::bind(&IchthusV2X::ImuCallback, this, std::placeholders::_1));
-
+  DEBUG = this->declare_parameter("debug", true);
+  DISPLAY =  this->declare_parameter("display", true);
   IP = this->declare_parameter("ip", "192.168.10.10");
-  std::cout << "IP : " << IP << std::endl; /* DEBUG */
+  std::cout << "IP : " << IP << std::endl;
+
+  ConnectSocket();
+
+  auto qos_profile = rclcpp::QoS(rclcpp::KeepLast(10));
+  // v2x_pub_ = this->create_publisher<kiapi_msgs::msg::V2xinfo>("v2x_info", qos_profile);
+  v2x_pub_ = this->create_publisher<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
+            "/external/traffic_light_recognition/traffic_signals", qos_profile);
+  loc_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>("/fix", 
+            rclcpp::SensorDataQoS().keep_last(64),
+            std::bind(&IchthusV2X::GnssCallback, this, std::placeholders::_1));
+  vel_sub_ = this->create_subscription<std_msgs::msg::Float64MultiArray>("/v2x", qos_profile,
+            std::bind(&IchthusV2X::VelocityCallback, this, std::placeholders::_1));
+
+  if (DEBUG == false)
+  {
+    gnss_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("/gnss_pose", 
+                    rclcpp::SensorDataQoS().keep_last(64),
+                    std::bind(&IchthusV2X::GnssPoseCallback, this, std::placeholders::_1));
+  }
+  else
+  {
+    std::cout << "## DEBUG MODE ##" << std::endl;
+    ori_sub_ = this->create_subscription<sensor_msgs::msg::Imu>("/imu/data", qos_profile, /* DEBUG */
+                std::bind(&IchthusV2X::ImuCallback, this, std::placeholders::_1));
+    pvd_pub_ = this->create_publisher<kiapi_msgs::msg::Pvdinfo>("pvd_info", qos_profile); /* DEBUG */
+  }
+
+  if (DISPLAY == true)
+  {
+    std::cout << "## DISPLAY MODE ##" << std::endl;
+  }
 }
 IchthusV2X::~IchthusV2X()
 {
 }
 
-/*
-void IchthusV2X::LocationCallback(const kiapi_msgs::msg::Mylocation::SharedPtr msg)
-{
-  std::cout << "callback" << std::endl;
-  Vli_.latitude = msg->latitude;
-  Vli_.longitude = msg->longitude;
-  Vli_.elevation = msg->elevation;
-  Vli_.heading = msg->heading;
-  Vli_.speed = msg->speed;
-  Vli_.transmisson = msg->transmisson;
-
-  if(is_first_topic)
-  {
-    is_first_topic = false;
-    connect_obu_uper_tcp();
-  }
-}
-*/
-
-/*
-void IchthusV2X::ImuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
-{
-  // std::cout << "callback" << std::endl;
-  double siny_cosp = 2 * (msg->orientation.w * msg->orientation.z + msg->orientation.x * msg->orientation.y);
-  double cosy_cosp = 1 - 2 * (msg->orientation.y * msg->orientation.y + msg->orientation.z * msg->orientation.z);
-  Vli_.heading = std::atan2(siny_cosp, cosy_cosp);
-}
-*/
-
 void IchthusV2X::GnssCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg)
 {
-  // std::cout << "callback" << std::endl; /* DEBUG */
   Vli_.latitude = msg->latitude*10000000;
   Vli_.longitude = msg->longitude*10000000;
   Vli_.elevation = msg->altitude*10;
-
-  if(is_first_topic)
-  {
-    is_first_topic = false;
-    connect_obu_uper_tcp();
-  }
 }
-
-
-void IchthusV2X::GnssPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
-{
-  // std::cout << "callback" << std::endl; /* DEBUG */
-  double siny_cosp = 2.0 * (msg->pose.orientation.w * msg->pose.orientation.z + msg->pose.orientation.x * msg->pose.orientation.y);
-  double cosy_cosp = 1.0 - 2.0 * (msg->pose.orientation.y * msg->pose.orientation.y + msg->pose.orientation.z * msg->pose.orientation.z);
-  Vli_.heading = static_cast<double>(static_cast<int>((-(std::atan2(siny_cosp, cosy_cosp) * (180.0 / M_PI)) + 450.0)) % 360)*80;
-}
-
 
 void IchthusV2X::VelocityCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
-  // std::cout << "velcallback1 : " << msg->data[0] << std::endl; /* DEBUG */
-  // std::cout << "velcallback2 : " << msg->data[1] << std::endl; /* DEBUG */
   Vli_.speed = msg->data[0]*50;
   if (msg->data[1] == 0)
   {
@@ -110,7 +85,22 @@ void IchthusV2X::VelocityCallback(const std_msgs::msg::Float64MultiArray::Shared
   }
 }
 
-void IchthusV2X::connect_obu_uper_tcp()
+void IchthusV2X::GnssPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
+{
+  double siny_cosp = 2.0 * (msg->pose.orientation.w * msg->pose.orientation.z + msg->pose.orientation.x * msg->pose.orientation.y);
+  double cosy_cosp = 1.0 - 2.0 * (msg->pose.orientation.y * msg->pose.orientation.y + msg->pose.orientation.z * msg->pose.orientation.z);
+  Vli_.heading = static_cast<double>(static_cast<int>((-(std::atan2(siny_cosp, cosy_cosp) * (180.0 / M_PI)) + 450.0)) % 360)*80;
+}
+
+void IchthusV2X::ImuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
+{
+  double siny_cosp = 2 * (msg->orientation.w * msg->orientation.z + msg->orientation.x * msg->orientation.y);
+  double cosy_cosp = 1 - 2 * (msg->orientation.y * msg->orientation.y + msg->orientation.z * msg->orientation.z);
+  Vli_.heading = std::atan2(siny_cosp, cosy_cosp);
+}
+
+
+void IchthusV2X::ConnectSocket()
 {
   sockFd = -1;
   std::string obu_ip = IP;
@@ -124,14 +114,14 @@ void IchthusV2X::connect_obu_uper_tcp()
   /* Convert String IP Address */
   if (inet_pton(AF_INET, obu_ip.c_str(), &obu_addr.sin_addr) <= 0)
   {
-    std::cout << "DEBUG : Error, inet_pton" << std::endl;
+    std::cout << "ERROR : Error, inet_pton" << std::endl;
     exit(1);
   }
 
   /* Create Client Socket FD */
   if ((sockFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
   {
-    std::cout << "DEBUG : connect failed, retry" << std::endl;
+    std::cout << "ERROR : connect failed, retry" << std::endl;
     exit(1);
   }
 
@@ -139,20 +129,20 @@ void IchthusV2X::connect_obu_uper_tcp()
   int connected = -1;
   if ((connected = connect(sockFd, (const sockaddr *)&obu_addr, sizeof obu_addr))<0)
   {
-    std::cout << "DEBUG : step sock connect error : " << connected << std::endl;
+    std::cout << "ERROR : step sock connect error : " << connected << std::endl;
     exit(1);
   }
 
-  txPvd = get_clock_time(); 
+  txPvd = GetClockTime(); 
 
   std::cout << "DEBUG : OBU TCP [" << obu_ip << ":" << obu_port << "] Connected" << std::endl;
 
   /* Thread */
-  th1 = receiveSpatThread();
-  th2 = sendPvdThread();
+  th1 = ReceiveSpatThread();
+  th2 = SendPvdThread();
 }
 
-unsigned long long IchthusV2X::get_clock_time()
+unsigned long long IchthusV2X::GetClockTime()
 {  
   struct timespec ts;
   clock_gettime(CLOCK_REALTIME, &ts);  
@@ -160,16 +150,16 @@ unsigned long long IchthusV2X::get_clock_time()
   return clock;
 }
 
-thread IchthusV2X::receiveSpatThread()
+thread IchthusV2X::ReceiveSpatThread()
 {
-  return thread([this]{receiveSpat();});
+  return thread([this]{ReceiveSpat();});
 }
-thread IchthusV2X::sendPvdThread()
+thread IchthusV2X::SendPvdThread()
 {
-  return thread([this]{sendPvd();});
+  return thread([this]{SendPvd();});
 }
 
-void IchthusV2X::receiveSpat()
+void IchthusV2X::ReceiveSpat()
 {
   int rxSize = -1;
   while ((rxSize = recv(sockFd, rxBuffer, 2048, MSG_NOSIGNAL)) > 0)
@@ -186,7 +176,6 @@ void IchthusV2X::receiveSpat()
 
     if (msgs.size() < sizeof(struct CestObuUperPacketHeader))
     { 
-      // fprintf(stdout, "require more bytes, current bytes = %d \n",msgs.size());
       std::cout <<  "require more bytes, current bytes = " << msgs.size() << std::endl;
       break;
     }
@@ -194,7 +183,7 @@ void IchthusV2X::receiveSpat()
     std::string payload;
     struct CestObuUperPacketHeader *header = (struct CestObuUperPacketHeader *)&msgs[0]; 
     payload.append(msgs, sizeof(struct CestObuUperPacketHeader), header->payloadLen); 
-    // std::cout << "size : " << header->payloadLen << endl; /* DEBUG */
+    // std::cout << "size : " << header->payloadLen << std::endl; /* DEBUG */
 
     if(header->messageType == 0x3411)
     {
@@ -205,7 +194,6 @@ void IchthusV2X::receiveSpat()
     else
     {
       printf("RX - \"RX_WAVE_UPER\" [%d]\n", header->payloadLen);
-      // std::cout << "RX - \"RX_WAVE_UPER\" [" << header->payloadLen << "]" << std::endl;
     }
 
     MessageFrame_t* msgFrame = nullptr;
@@ -214,85 +202,137 @@ void IchthusV2X::receiveSpat()
     switch (res.code)
     {
       case asn_dec_rval_code_e::RC_OK:
-          // fprintf(stderr,"\n[RC_OK]\n");
-          // printf("\n[RC_OK]\n");
           std::cout << "\n[RC_OK]" << std::endl;
           switch (msgFrame->messageId)
           {
             case DSRC_ID_SPAT:
-              std::cout << ">> Parse J2735 : SPAT <<" << endl;
-              parse_spat((SPAT_t*)&msgFrame->value.choice.SPAT); 
-              gen_SPaTMsg((SPAT_t*)&msgFrame->value.choice.SPAT);
+              std::cout << ">> Parse J2735 : SPAT <<" << std::endl;
+              if (DISPLAY == true)
+              {
+                PrintSpat((SPAT_t*)&msgFrame->value.choice.SPAT);
+              } 
+              PublishSpat((SPAT_t*)&msgFrame->value.choice.SPAT);
               break;
-
             case DSRC_ID_MAP:
-              std::cout << ">> Parse J2735 : MAP <<" << endl;
-
+              std::cout << ">> Parse J2735 : MAP <<" << std::endl;
             default:
                 break;
           }
-
-          v2x_pub_->publish(v2x_msg);
           //asn_fprint(stderr, rxUperBuffer&asn_DEF_MessageFrame, msgFrame); /* DEBUG */
-
           break;
       case asn_dec_rval_code_e::RC_WMORE:
-          // fprintf(stderr,"\n[RC_WMORE]\n");
           std::cout << "\n[RC_WMORE]" << std::endl;
           break;
       case asn_dec_rval_code_e::RC_FAIL:
-          // fprintf(stderr,"\n[RC_FAIL]\n");
           std::cout << "\n[RC_FAIL]" << std::endl;
           break;
       default:
           break;
-    }
-      
+    }      
     msgs.erase(0, sizeof(struct CestObuUperPacketHeader) + payload.size());
-    // usleep(1000);
+    usleep(1000);
   }
   close(sockFd);
 }
 
-void IchthusV2X::gen_SPaTMsg(SPAT_t *spat)
+void IchthusV2X::PublishSpat(SPAT_t *spat)
 {
-  v2x_msg.msg_type = kiapi_msgs::msg::V2xinfo::SPAT_MSG_TYPE;
+  autoware_auto_perception_msgs::msg::TrafficSignalArray v2x_msg;
 
-  v2x_msg.spat_id_region = 0;            // 교차로 식별 고유 ID
-  v2x_msg.spat_movement_cnt = 0;
-  v2x_msg.spat_movement_name.resize(0);  // 교차로 명칭
-  v2x_msg.spat_signal_group.resize(0);   // 메시지에 해당되는 차선목록
-  v2x_msg.spat_eventstate.resize(0);     // 빨,초,노 event값(신호상태)
-  v2x_msg.spat_minendtime.resize(0);     // 만약 minEndTime 존재한다면 넣기.(예상 최소 종료 시각)
+  rclcpp::Time current_time = this->now();
+  v2x_msg.header.stamp = current_time;
+  v2x_msg.header.frame_id = ' ';
 
-  std::cout << "\ninit_gen_SPaT" << endl;
-  for(int i = 0; i < spat->intersections.list.count; i++)
+  std::cout << "\ninit_gen_SPaT" << std::endl;
+  for (int i=0; i<spat->intersections.list.count; i++)
   {
     struct IntersectionState *inter_p = spat->intersections.list.array[i];
-    v2x_msg.spat_id_region = inter_p->id.id;
-    v2x_msg.spat_movement_cnt = inter_p->states.list.count;
-
-    for (int j = 0 ; j < v2x_msg.spat_movement_cnt; ++j)
+    for (int j=0 ; j<inter_p->states.list.count; ++j)
     {
+      autoware_auto_perception_msgs::msg::TrafficSignal signal;
       struct MovementState *move_p = inter_p->states.list.array[j];
-      v2x_msg.spat_signal_group.push_back(move_p->signalGroup); 
-      v2x_msg.spat_movement_name.push_back((char*)move_p->movementName->buf);
-    
-      for(int k = 0; k < move_p->state_time_speed.list.count; ++k)
+      if (inter_p->id.id == 1)
       {
-        struct MovementEvent *mvevent_p = move_p->state_time_speed.list.array[k];
-        v2x_msg.spat_eventstate.push_back(mvevent_p->eventState);
-          
-        if (mvevent_p->timing)
+        switch (move_p->signalGroup)
         {
-          v2x_msg.spat_minendtime.push_back(mvevent_p->timing->minEndTime);
+          case 13:
+          case 14:
+            signal.map_primitive_id = 1753;
+            break;
+          case 16:
+          case 17:
+            signal.map_primitive_id = 1648;
+            break;
+          case 19:
+          case 20:
+            signal.map_primitive_id = 1742;
+            break;
+          case 22:
+          case 23:
+            signal.map_primitive_id = 1718;
+            break;
         }
       }
+      else if (inter_p->id.id == 2)
+      {
+        switch (move_p->signalGroup)
+        {
+          case 13:
+          case 14:
+            signal.map_primitive_id = 1707;
+            break;
+          case 16:
+          case 17:
+            signal.map_primitive_id = 1660;
+            break;
+          case 19:
+          case 20:
+            signal.map_primitive_id = 1696;
+            break;
+          case 22:
+          case 23:
+            signal.map_primitive_id = 1684;
+            break;
+        }
+      }
+      else if (inter_p->id.id == 3)
+      {
+        switch (move_p->signalGroup)
+        {
+          // case 17:
+          //   signal.map_primitive_id = 1764;
+          //   break;
+          case 19:
+            signal.map_primitive_id = 1878;
+        }
+      }
+
+      for(int k=0; k<move_p->state_time_speed.list.count; ++k)
+      {
+        autoware_auto_perception_msgs::msg::TrafficLight light;
+        struct MovementEvent *mvevent_p = move_p->state_time_speed.list.array[k];
+        /* RED & YELLOW */
+        if (mvevent_p->eventState == 3 || mvevent_p->eventState == 7 || mvevent_p->eventState == 8)
+        {
+          light.color = 1;
+        }
+        /* GREEN */
+        else if (mvevent_p->eventState == 5 || mvevent_p->eventState == 6)
+        {
+          light.color = 3;
+        }
+        light.shape = 5;
+        light.status = 14;
+
+        signal.lights.emplace_back(light);
+      }
+      v2x_msg.signals.emplace_back(signal);
     }
-  }	
+  }
+  v2x_pub_->publish(v2x_msg);
 }
 
-int IchthusV2X::parse_spat(SPAT_t *spat)
+void IchthusV2X::PrintSpat(SPAT_t *spat)
 { 
   for (int i = 0; i < spat->intersections.list.count; i++)
   {
@@ -303,9 +343,7 @@ int IchthusV2X::parse_spat(SPAT_t *spat)
       printf("%c", ptr->name->buf[i]);
     }
 
-    printf("\n");
-
-    printf("id\n");
+    printf("\nid\n");
     printf("  region : %ld\n", *ptr->id.region);
     printf("  id     : %ld\n", ptr->id.id);
     printf("revision     : %ld\n", ptr->revision);
@@ -390,7 +428,6 @@ int IchthusV2X::parse_spat(SPAT_t *spat)
 								printf("Impossible situation happened. please check this\n");
                 exit(-1);
 						}
-
             printf("          timing\n");
             printf("            minEndTime : %ld\n", ptr->states.list.array[j]->state_time_speed.list.array[k]->timing->minEndTime);
           }
@@ -422,12 +459,11 @@ int IchthusV2X::parse_spat(SPAT_t *spat)
       }
     }	
   }
-
-  return 0;
 }
 
+
 /* TX_WAVE_UPER(RESULT) */
-void IchthusV2X::sendPvd()
+void IchthusV2X::SendPvd()
 {
   while(1)
   {
@@ -437,20 +473,20 @@ void IchthusV2X::sendPvd()
       exit(-1);
     }
     
-    if(tx_v2i_pvd() < 0)
+    if(V2iPvd() < 0)
     {
-      std::cout << "DEBUG : disconnect TCP, retry" << endl;
+      std::cout << "ERROR : disconnect TCP, retry" << std::endl;
       close(sockFd);
       exit(1);
     }
 
-    // usleep(1000);
+    usleep(100000);
   }
 }
 
-int IchthusV2X::tx_v2i_pvd()
+int IchthusV2X::V2iPvd()
 {
-  unsigned long long interval = get_clock_time() - txPvd;  // msec;
+  unsigned long long interval = GetClockTime() - txPvd;  // msec;
 
   if(interval < PVD_INTERVAL)
   {
@@ -462,16 +498,17 @@ int IchthusV2X::tx_v2i_pvd()
   MessageFrame_t msg;
   char uper[MAX_UPER_SIZE]; 
 
-  fill_j2735_pvd(&msg);
+  FillPvd(&msg);
 
-  std::cout << ">> Parse J2735 : PVD <<" << endl;
-  parse_pvd(&msg);
-  gen_PvdMsg();
+  std::cout << ">> Parse J2735 : PVD <<" << std::endl;
+  if (DISPLAY == false)
+  {
+    PrintPvd(&msg);
+  }
 
-  // pvd_pub_->publish(pvd_msg); /* DEBUG */
+  PublishPvd();               /* DEBUG */
 
-  int encodedBits = encode_j2735_uper(uper, &msg);
-
+  int encodedBits = EncodeJ2735Uper(uper, &msg);
   // printf("bits:%d\n",encodedBits); /*DEBUG */
 
   /* Encdoing Fail, unable to send */
@@ -481,13 +518,12 @@ int IchthusV2X::tx_v2i_pvd()
   }
     
   int byteLen = encodedBits / 8 + ((encodedBits % 8)? 1:0);
-    
   // print_hex(uper,byteLen); /* DEBUG */    
       
-  return request_tx_wave_obu(uper,byteLen);  
+  return SendRequest(uper,byteLen);  
 }
 
-void IchthusV2X::print_hex(char *data, int len)
+void IchthusV2X::PrintHex(char *data, int len)
 {
   std::cout << "HEX[" << len << "] : ";
   for(int i = 0 ; i < len ; i++)
@@ -497,7 +533,7 @@ void IchthusV2X::print_hex(char *data, int len)
   printf("\n");
 }
 
-int IchthusV2X::fill_j2735_pvd(MessageFrame_t *dst)
+void IchthusV2X::FillPvd(MessageFrame_t *dst)
 {
   /* current day, time */
   time_t timer;
@@ -610,17 +646,18 @@ int IchthusV2X::fill_j2735_pvd(MessageFrame_t *dst)
   *ptrSnapshot->thePosition.heading = Vli_.heading;               // (INPUT) <--------------- 현재 차량의 주행 방향 (북쪽 0도)               
   ptrSnapshot->thePosition.speed->speed = Vli_.speed;             // (INPUT) <-------------- -현재 차량의 속도                  
   ptrSnapshot->thePosition.speed->transmisson = Vli_.transmisson; // (INPUT) <--------------- 현재 차량의 변속기 상태          
-
-  return 0;
 }
 
 /* DEBUG */
-void IchthusV2X::gen_PvdMsg()
+void IchthusV2X::PublishPvd()
 {
-  pvd_msg.msg_type = 5;
+  kiapi_msgs::msg::Pvdinfo pvd_msg;
+  pvd_msg.latitude = Vli_.latitude;
+  pvd_msg.longitude = Vli_.longitude;
+  pvd_pub_->publish(pvd_msg);
 }
 
-int IchthusV2X::parse_pvd(MessageFrame_t *pvd)
+void IchthusV2X::PrintPvd(MessageFrame_t *pvd)
 {
   ProbeVehicleData_t *ptrPvd = &pvd->value.choice.ProbeVehicleData;
 
@@ -690,16 +727,29 @@ int IchthusV2X::parse_pvd(MessageFrame_t *pvd)
     printf("  heading   : %ld\n", *ptrSnapshot->thePosition.heading);
     printf("  speed\n");
     printf("    speed       : %ld\n", ptrSnapshot->thePosition.speed->speed);
-    printf("    transmisson : %ld\n", ptrSnapshot->thePosition.speed->transmisson);
+    printf("    transmisson : ");
+    if (ptrSnapshot->thePosition.speed->transmisson == 0)
+    {
+      printf("Neutral");
+    }
+    else if (ptrSnapshot->thePosition.speed->transmisson == 1)
+    {
+      printf("Park");
+    }
+    else if (ptrSnapshot->thePosition.speed->transmisson == 2)
+    {
+      printf("Forward gears");
+    }
+    else if (ptrSnapshot->thePosition.speed->transmisson == 3)
+    {
+      printf("Reverse gears");
+    }
+    printf("(%ld)\n", ptrSnapshot->thePosition.speed->transmisson);  
   }
-
-  return 0;
 }
 
-int IchthusV2X::encode_j2735_uper(char *dst, MessageFrame_t *src)
+int IchthusV2X::EncodeJ2735Uper(char *dst, MessageFrame_t *src)
 {
-  // int res = -1;
-
   asn_enc_rval_t ret = uper_encode_to_buffer(&asn_DEF_MessageFrame,
                                               NULL,
                                               src,
@@ -721,7 +771,7 @@ int IchthusV2X::encode_j2735_uper(char *dst, MessageFrame_t *src)
   }
 }
 
-int IchthusV2X::request_tx_wave_obu(char *uper, unsigned short uperLength)
+int IchthusV2X::SendRequest(char *uper, unsigned short uperLength)
 {
   if(sockFd < 0)
   {
@@ -737,21 +787,20 @@ int IchthusV2X::request_tx_wave_obu(char *uper, unsigned short uperLength)
   ptrHeader->payloadLen = uperLength;
   ptrHeader->deviceType = 0xCE;
   memcpy(ptrHeader->deviceId,clientDeviceId,3);
-
   memcpy(packet + sizeof(struct CestObuUperPacketHeader), uper, uperLength);
-
-  int res = write(sockFd, packet, packetLen);
 
   /* PVD Hz DEBUG */
   // time_t timer1;
   // struct tm *t1;
   // timer1 = time(NULL);
   // RCLCPP_INFO(this->get_logger(), "send time : %ld\n",timer1);
+  // std::cout<<"send time : "<<rclcpp::Clock().now().nanoseconds()<<std::endl;
 
+  int res = write(sockFd, packet, packetLen);
   if (res > 0)
   {
     printf("TX - \"TX_WAVE_UPER\" SEQ[%d] = ", ptrHeader->seq);
-    print_hex(uper, uperLength);
+    PrintHex(uper, uperLength);
 
     if (res != packetLen)
     {            
@@ -767,42 +816,4 @@ int IchthusV2X::request_tx_wave_obu(char *uper, unsigned short uperLength)
   return 0;
 }
 
-void IchthusV2X::sigint_handler(int sig)
-{  
-	// fprintf(stdout,"done !\n");
-  std::cout << "done!" << std::endl;
-  done = true;
-}
-
-void IchthusV2X::install_signal_handler(void)
-{
-  struct sigaction sa; 
-
-  memset(&sa, 0, sizeof sa); 
-  sa.sa_handler = sigint_handler;
-
-  if (sigaction(SIGINT, &sa, NULL) < 0) {
-    // fprintf(stderr,"ctrl+c sigint install failed \n");
-    std::cout << "ctrl+c sigint install failed" << std::endl;
-    exit(-1);
-  }
-  // fprintf(stdout,"Press <Ctrl-C> to exit\n");
-  std::cout << "Press <Ctrl-C> to exit" << std::endl;
-}
-
-}
-
-int main(int argc, char *argv[])
-{
-  rclcpp::init(argc, argv);
-  auto node = std::make_shared<ichthus_v2x::IchthusV2X>();
-  
-  rclcpp::Rate rate(5);
-  while(rclcpp::ok())
-  {
-    rclcpp::spin_some(node);
-    rate.sleep();
-  }
-
-  return 0;
 }
