@@ -18,7 +18,7 @@ This repository refactoring [tensorrt_inference](https://github.com/linghu8812/t
 - onnx
 
 ## How To Guides
-###1. Create trt file
+1. Create trt file<br>
 `Be sure to do it on your target device.`<br>
 * [yolov4 Network darknet => ONNX => TensorRT](https://github.com/Bangglll/tensorrt_inference/tree/master/project/yolov7)
 * [yolov7 pytorch => ONNX => TensorRT](https://github.com/Bangglll/tensorrt_inference/tree/master/project/yolov7)
