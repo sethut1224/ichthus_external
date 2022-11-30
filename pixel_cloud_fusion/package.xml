@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>pixel_cloud_fusion</name>
+  <version>0.1.0</version>
+  <description>The pixel_cloud_fusion package</description>
+  <maintainer email="hwbang0815@naver.com">root</maintainer>
+  <maintainer email="xoz1206@gmail.com">root</maintainer>
+  <maintainer email="young@ssu.ac.kr">root</maintainer>
+  <license>MIT License</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>autoware_auto_perception_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>cv_bridge</depend>
+  <depend>image_transport</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+
+  <depend>std_msgs</depend>
+  <depend>builtin_interfaces</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>tf2_eigen</depend>
+  <depend>tf2_sensor_msgs</depend>
+  <depend>message_filters</depend>
+  <depend>libpcl-all-dev</depend>
+  <depend>euclidean_cluster</depend>
+  <depend>image_projection_based_fusion</depend>
+  <depend>Eigen</depend>
+  <depend>shape_estimation</depend>
+  <depend>object_merger</depend>
+  <depend>multi_object_tracker</depend>
+
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+
+  <exec_depend>rosidl_default_runtime</exec_depend>
+  <member_of_group>rosidl_interface_packages</member_of_group>
+
+  <depend>tier4_perception_msgs</depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

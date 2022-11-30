@@ -1,0 +1,15 @@
+<!--  ===========================================================================
+    Copyright 2022. The ICHTHUS Project. All Rights Reserved.
+    Hyewon Bang (hwbang0815@naver.com) and Jamin Lee (xoz1206@gmail.com), Youngjoon Han (young@ssu.ac.kr).
+    Vision Systems Laboratory, Soongsil University.
+    added by ICHTHUS, Hyewon Bang on 20221026
+    [Licensed under the MIT License]
+    =========================================================================== -->
+
+<launch>
+  <node pkg="pixel_cloud_fusion" exec="pixel_cloud_fusion_node" name="pixel_cloud_fusion_node" output="screen"></node>
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="lidar2leftcamera" args="8.93274306e-01 -3.22815889e-01 1.56911172e+00 -1.23334046e+00 4.19205713e-05  -1.60009879e+00 base_link cam1" output="screen"></node>
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="lidar2rightcamera" args="1.74980411  0.11685458  0.93969534 -2.14323719 -0.00676988 -1.58749067 base_link cam0" output="screen"></node>
+</launch>
+
+

@@ -1,0 +1,24 @@
+/**:
+  ros__parameters:
+    engine_file:   "/workspaces/isaac_ros-dev/src/ichthus_tensorrt_yolo/data/yolov7_tiny_speed_bust.trt"
+    label_file:   "/workspaces/isaac_ros-dev/src/ichthus_tensorrt_yolo/data/speed_bust.names"
+    name : ichthus_trt_yolo_speed_bust
+    input_topic : "/right_raw"
+    output_topic : "/right_rois1"
+    mode : "FP16"
+    yolo_version : "yolov7"
+    BATCH_SIZE:    1
+    INPUT_CHANNEL: 3
+    IMAGE_WIDTH:   640
+    IMAGE_HEIGHT:  640
+    image_order:   "BCHW"
+    channel_order: "BGR"
+    obj_threshold: 0.3
+    nms_threshold: 0.5
+    agnostic:      False
+    strides:       [8, 16, 32]
+    num_anchors:   [3,  3,  3]
+    img_mean:      [ 0.0, 0.0, 0.0 ]
+    img_std:       [ 1.0, 1.0, 1.0 ]
+    alpha:         255.0
+    resize:        "keep_ratio"
