@@ -3,6 +3,7 @@
     Jaemin Lee (xoz1206@gmail.com),
     Youngjun Han (young@ssu.ac.kr)
     Vision System Laboratory, Soongsil University.
+    added by ICHTHUS, Jaemin Lee on 20221026
     [Licensed under the MIT License]  
     ===========================================================================*/
 
