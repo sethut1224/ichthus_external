@@ -2,7 +2,6 @@
 Copyright 2022. The ICHTHUS Project. All Rights Reserved.
 Eunseo Choi (eunseo.choi.d@gmail.com) and Kanghee Kim (kim.kanghee@gmail.com).
 Mobility Intelligence & Computing Systems Laboratory, Soongsil University.
-[Licensed under the Apache License, Version 2.0]
 =========================================================================== */
 
 #ifndef __SIM_MISSION_PUB_HPP_
