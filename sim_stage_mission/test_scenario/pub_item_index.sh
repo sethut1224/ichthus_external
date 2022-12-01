@@ -1,4 +1,9 @@
 #!/bin/bash
+# ===========================================================================
+# Copyright 2022. The ICHTHUS Project. All Rights Reserved.
+# Eunseo Choi (eunseo.choi.d@gmail.com) and Kanghee Kim (kim.kanghee@gmail.com).
+# Mobility Intelligence & Computing Systems Laboratory, Soongsil University.
+# ===========================================================================
 
 if [ $# -ne 6 ] ; then
    echo "Usage: ./pub_item_index.sh [item_index]"
