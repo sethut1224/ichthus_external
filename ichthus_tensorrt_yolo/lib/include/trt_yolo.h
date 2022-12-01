@@ -57,6 +57,8 @@ struct Deleter
     }
   }
 };
+
+#if 1//modified by ICHTHUS, Hyewon Bang on 20221026
 struct ClassRes{
     int classes;
     float prob;
@@ -67,10 +69,11 @@ struct Bbox : ClassRes{
     float w;
     float h;
 };
-
 struct DetectRes {
     std::vector<Bbox> det_results;
 };
+#endif
+
 struct Config
 {
   std::string engine_file;
@@ -94,16 +97,14 @@ struct Config
   std::string resize;
 };
 
+#if 1//modified by ICHTHUS, Hyewon Bang on 20221026
 class Model
 {
 public:
     explicit Model(const Config &config);
     ~Model();
     void LoadEngine();
-//    virtual float *InferenceImage(std::vector<float> image_data) = 0;
     virtual void InferenceFolder(std::vector<cv::Mat> &vec_img,std::vector<DetectRes> &detections)  = 0;
-    // virtual void InferenceFolder(const std::string &folder_name) = 0;
-    // virtual std::vector<DetectRes> InferenceImages(std::vector<cv::Mat> &vec_img)=0;
 
 protected:
     void ReadTrtFile();
@@ -129,9 +130,8 @@ protected:
     std::vector<float> img_std;
     float alpha;
     std::string resize;
-    // std::vector<std::vector<int>> anchors;
-    // std::string yolo_version;
 };
+#endif
 }  // namespace yolo
 
 #endif  // TRT_YOLO_HPP_

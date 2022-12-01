@@ -10,7 +10,7 @@ namespace yolo
 {
 class YOLO : public Detection {
 public:
-    explicit YOLO(const Config& config);
+    explicit YOLO(const Config& config);// Modified by Heywon on 2022/10/26
 
 protected:
     std::vector<DetectRes> PostProcess(const std::vector<cv::Mat> &vec_Mat, float *output) override;

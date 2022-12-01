@@ -4,8 +4,8 @@
   <name>ichthus_tensorrt_yolo</name>
   <version>0.1.0</version>
   <description>The ichthus_tensorrt_yolo package</description>
-  <maintainer email="hwbang0815@naver.com">Daisuke Nishimatsu</maintainer>
-  <license>MIT License</license>
+  <maintainer email="hwbang0815@naver.com">Hyewon Bang</maintainer>
+  <license>TODO</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 

@@ -1,24 +1,14 @@
-// Copyright 2020 Tier IV, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 /*  ===========================================================================
     Copyright 2022. The ICHTHUS Project. All Rights Reserved.
     Hyewon Bang (hwbang0815@naver.com) and Youngjoon Han (young@ssu.ac.kr).
     Vision Systems Laboratory, Soongsil University.
     added by ICHTHUS, Hyewon Bang on 20221026
-    [Licensed under the MIT License]
     ===========================================================================*/
+/*
+    bool IchthusTensorrtYoloNodelet::readLabelFile(const std::string & filepath, std::vector<std::string> * labels){}
+        - In autoware.universe/perception/tensorrt_yolo/src/nodelet.cpp
+          TensorrtYoloNodelet::readLabelFile(const std::string & filepath, std::vector<std::string> * labels){}
+*/
 
 #include "ichthus_tensorrt_yolo/nodelet.hpp"
 #include "build.h"
@@ -38,7 +28,8 @@ IchthusTensorrtYoloNodelet::IchthusTensorrtYoloNodelet(const rclcpp::NodeOptions
 : Node("ichthus_tensorrt_yolo", options)
 {
   using std::placeholders::_1;
-  
+
+  // set up parameters start
   std::string yolo_version = declare_parameter("yolo_version", "");
   std::string engine_file = declare_parameter("engine_file", "");
   std::string label_file = declare_parameter("label_file", "");
@@ -47,11 +38,12 @@ IchthusTensorrtYoloNodelet::IchthusTensorrtYoloNodelet(const rclcpp::NodeOptions
   std::cout <<"label_file : "<<label_file << std::endl;
   std::cout<<"yolo_version : " << yolo_version <<std::endl;
   std::cout<<"engine_file : " << engine_file <<std::endl;
-  // std::string onnx_file = declare_parameter("onnx_file", "");
+
   yolo_config_.engine_file = engine_file;
   yolo_config_.yolo_version = yolo_version;
 
   auto anchors = declare_parameter("anchors", std::vector<long>());
+
   if (yolo_config_.yolo_version =="yolov4"){
     std::vector<int> anchors_int(anchors.begin(), anchors.end());
     std::vector<std::vector<int>> anchors_int_int;
@@ -71,30 +63,34 @@ IchthusTensorrtYoloNodelet::IchthusTensorrtYoloNodelet(const rclcpp::NodeOptions
   std::vector<int> num_anchors_int(num_anchors.begin(), num_anchors.end());
   yolo_config_.num_anchors = num_anchors_int;
 
-  yolo_config_.BATCH_SIZE= declare_parameter("BATCH_SIZE",1);
-  yolo_config_.INPUT_CHANNEL= declare_parameter("INPUT_CHANNEL",3);
-  yolo_config_.IMAGE_WIDTH= declare_parameter("IMAGE_WIDTH",640);
-  yolo_config_.IMAGE_HEIGHT= declare_parameter("IMAGE_HEIGHT",640);
-  yolo_config_.image_order= declare_parameter("image_order","");
-  yolo_config_.channel_order= declare_parameter("channel_order","");
+  yolo_config_.BATCH_SIZE = declare_parameter("BATCH_SIZE",1);
+  yolo_config_.INPUT_CHANNEL = declare_parameter("INPUT_CHANNEL",3);
+  yolo_config_.IMAGE_WIDTH = declare_parameter("IMAGE_WIDTH",640);
+  yolo_config_.IMAGE_HEIGHT = declare_parameter("IMAGE_HEIGHT",640);
+  yolo_config_.image_order = declare_parameter("image_order","");
+  yolo_config_.channel_order = declare_parameter("channel_order","");
   auto img_mean = declare_parameter("img_mean",std::vector<double>());
   std::vector<float> img_mean_float(img_mean.begin(), img_mean.end());
 
   auto img_std = declare_parameter("img_std",std::vector<double>());
   std::vector<float> img_std_float(img_std.begin(), img_std.end());
 
-  yolo_config_.img_mean= img_mean_float;
-  yolo_config_.img_std= img_std_float;
-  yolo_config_.alpha= declare_parameter("alpha",255.0);
-  yolo_config_.resize= declare_parameter("resize","");
-  yolo_config_.labels_file=label_file;//config["labels_file"}.as<std::string>();
-  yolo_config_.obj_threshold=declare_parameter("obj_threshold",float());//config["obj_threshold"].as<float>();
-  yolo_config_.nms_threshold=declare_parameter("nms_threshold",float());//config["nms_threshold"].as<float>();
-  yolo_config_.agnostic=declare_parameter("agnostic",false);//config["agnostic"].as<bool>();
+  yolo_config_.img_mean = img_mean_float;
+  yolo_config_.img_std = img_std_float;
+  yolo_config_.alpha = declare_parameter("alpha",255.0);
+  yolo_config_.resize = declare_parameter("resize","");
+  yolo_config_.labels_file=label_file; //config["labels_file"}.as<std::string>();
+  yolo_config_.obj_threshold=declare_parameter("obj_threshold",float()); //config["obj_threshold"].as<float>();
+  yolo_config_.nms_threshold=declare_parameter("nms_threshold",float()); //config["nms_threshold"].as<float>();
+  yolo_config_.agnostic=declare_parameter("agnostic",false); //config["agnostic"].as<bool>();
+  // set up parameters end
 
+  // read label file
   if (!readLabelFile(label_file, &labels_)) {
     RCLCPP_ERROR(this->get_logger(), "Could not find label file");
   }
+
+  // read engine file
   std::ifstream fs(engine_file);
 
   if (fs.is_open()) {
@@ -106,8 +102,6 @@ IchthusTensorrtYoloNodelet::IchthusTensorrtYoloNodelet(const rclcpp::NodeOptions
 
   RCLCPP_INFO(this->get_logger(), "Inference engine prepared.");
 
-  std::lock_guard<std::mutex> lock(connect_mutex_);
-
   objects_pub_ = this->create_publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(output_topic, 1);
   std::string out_img = output_topic + "/debug/image";
   image_pub_ = image_transport::create_publisher(this, out_img);
@@ -115,9 +109,9 @@ IchthusTensorrtYoloNodelet::IchthusTensorrtYoloNodelet(const rclcpp::NodeOptions
 
 }
 
-void IchthusTensorrtYoloNodelet::callback(sensor_msgs::msg::Image::UniquePtr in_image_msg_uniq)
+void IchthusTensorrtYoloNodelet::callback(sensor_msgs::msg::Image::UniquePtr in_image_msg_unique)
 {
-  sensor_msgs::msg::Image::SharedPtr in_image_msg(new sensor_msgs::msg::Image(*in_image_msg_uniq));
+  sensor_msgs::msg::Image::SharedPtr in_image_msg(new sensor_msgs::msg::Image(*in_image_msg_unique));
 
   auto start = rclcpp::Clock().now();
 

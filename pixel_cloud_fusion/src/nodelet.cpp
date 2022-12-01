@@ -3,7 +3,6 @@
     Hyewon Bang (hwbang0815@naver.com) and Jamin Lee (xoz1206@gmail.com), Youngjoon Han (young@ssu.ac.kr).
     Vision Systems Laboratory, Soongsil University.
     added by ICHTHUS, Hyewon Bang on 20221026
-    [Licensed under the MIT License]
     ===========================================================================*/
 
 #include "pixel_cloud_fusion/nodelet.hpp"
@@ -19,7 +18,6 @@ namespace pcfusion
         using std::placeholders::_2;
         using std::placeholders::_3;
         using std::placeholders::_4;
-
 
         // camera paramter
         image_width = declare_parameter("image_width", 960);
@@ -102,11 +100,6 @@ namespace pcfusion
     //     autoware_auto_perception_msgs::msg::DetectedObjects euclidean_fusion_objects_right = extractObject(right_cam_obj_msg, point_cloud_msg, "cam0");
 
     //     // 3. merge objects
-
-    //     // std::cout << "center left  :" << centerpoint_fusion_objects_left.objects.size() << std::endl;
-    //     // std::cout << "center right :" << centerpoint_fusion_objects_right.objects.size() << std::endl;
-    //     // std::cout << "eu left      : " << euclidean_fusion_objects_left.objects.size() << std::endl;
-    //     // std::cout << "eu right     : " << euclidean_fusion_objects_right.objects.size() << std::endl;
         
     //     autoware_auto_perception_msgs::msg::DetectedObjects merged_fusion_objects = mergeFusionObject(label_center_point_msg, 
     //         centerpoint_fusion_objects_left, centerpoint_fusion_objects_right, euclidean_fusion_objects_left, euclidean_fusion_objects_right);
@@ -175,7 +168,6 @@ namespace pcfusion
             }
 
         }
-        // std::cout << "unorder size : " << filtered_cloud.size() << std::endl;
         
         return filtered_cloud;
     }
@@ -186,8 +178,8 @@ namespace pcfusion
         for(size_t i = 0; i < cam_speed_bust_obj->feature_objects.size(); ++i)
         {
             pcl::PointCloud<pcl::PointXYZ> speed_bust_obj;
-            int roi_row = int(cam_speed_bust_obj->feature_objects[i].feature.roi.x_offset);//int(cam_speed_bust_obj->feature_objects[i].feature.roi.x_offset - cam_speed_bust_obj -> feature_objects[i].feature.roi.width / 2);
-            int roi_col = int(cam_speed_bust_obj->feature_objects[i].feature.roi.y_offset);//int(cam_speed_bust_obj->feature_objects[i].feature.roi.y_offset - cam_speed_bust_obj -> feature_objects[i].feature.roi.height / 2);
+            int roi_row = int(cam_speed_bust_obj->feature_objects[i].feature.roi.x_offset);
+            int roi_col = int(cam_speed_bust_obj->feature_objects[i].feature.roi.y_offset);
             int roi_width = int(cam_speed_bust_obj->feature_objects[i].feature.roi.width);
             int roi_height = int(cam_speed_bust_obj->feature_objects[i].feature.roi.height);
 
@@ -208,17 +200,14 @@ namespace pcfusion
     geometry_msgs::msg::PoseArray PixelCloudFusionNodelet::mergeSpeedBustPose(geometry_msgs::msg::PoseArray left_speed_bust_objects, geometry_msgs::msg::PoseArray right_speed_bust_objects)
     {    
         geometry_msgs::msg::PoseArray merge_pose_array;
-        // std::cout<<"6"<<std::endl;
         for (size_t i = 0; i < left_speed_bust_objects.poses.size(); ++i)
         {
             merge_pose_array.poses.push_back(left_speed_bust_objects.poses[i]);
         }
-        // std::cout<<"7"<<std::endl;
         for (size_t i = 0; i < right_speed_bust_objects.poses.size(); ++i)
         {
             merge_pose_array.poses.push_back(right_speed_bust_objects.poses[i]);
         }
-        // std::cout<<"8"<<std::endl;
         return merge_pose_array;
     }
 
@@ -234,16 +223,6 @@ namespace pcfusion
             if(temp_cloud.points.size() < 2) continue;
 
             pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_xyz(new pcl::PointCloud<pcl::PointXYZ>(temp_cloud));
-            // for (size_t i =0; i < temp_cloud.points.size(); ++i)
-            // {
-            //     pcl::PointXYZ p;
-            //     p.x = temp_cloud.points[i].x;
-            //     p.y = temp_cloud.points[i].y;
-            //     p.z = temp_cloud.points[i].z;
-            //     input_cloud_xyz->points.push_back(p);
-            // }
-
-            // pcl::PointCloud<pcl::PointXYZ>::Ptr last_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>(input_cloud));
             std::vector<pcl::PointCloud<pcl::PointXYZ>> clusters;
             cluster_->cluster(input_cloud_xyz, clusters);
 

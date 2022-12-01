@@ -4,10 +4,10 @@
   <name>pixel_cloud_fusion</name>
   <version>0.1.0</version>
   <description>The pixel_cloud_fusion package</description>
-  <maintainer email="hwbang0815@naver.com">root</maintainer>
-  <maintainer email="xoz1206@gmail.com">root</maintainer>
-  <maintainer email="young@ssu.ac.kr">root</maintainer>
-  <license>MIT License</license>
+  <maintainer email="hwbang0815@naver.com">Hyewon Bang</maintainer>
+  <maintainer email="xoz1206@gmail.com">Jamin Lee</maintainer>
+  <maintainer email="young@ssu.ac.kr">Youngjoon Han</maintainer>
+  <license>TODO</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

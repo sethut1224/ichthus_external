@@ -1,20 +1,12 @@
+//
+// Modified by Heywon on 2022/10/26
+//
 #ifndef TENSORRT_INFERENCE_DETECTION_H
 #define TENSORRT_INFERENCE_DETECTION_H
 
 #include "classification.h"
 namespace yolo
 {
-// struct Bbox : ClassRes{
-//     float x;
-//     float y;
-//     float w;
-//     float h;
-// };
-
-// struct DetectRes {
-//     std::vector<Bbox> det_results;
-// };
-
 class Detection : public Model
 {
 public:

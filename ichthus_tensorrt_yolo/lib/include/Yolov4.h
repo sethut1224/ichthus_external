@@ -6,7 +6,7 @@ namespace yolo
 {
 class YOLOv4 : public Detection {
 public:
-    explicit YOLOv4(const Config& config);
+    explicit YOLOv4(const Config& config);// Modified by Heywon on 2022/10/26
 
 private:
     std::vector<DetectRes> PostProcess(const std::vector<cv::Mat> &vec_Mat, float *output) override;

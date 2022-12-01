@@ -3,7 +3,6 @@
     Hyewon Bang (hwbang8150@gmail.com) and Jamin Lee (xoz1206@gmail.com), Youngjoon Han (young@ssu.ac.kr).
     Vision Systems Laboratory, Soongsil University.
     added by ICHTHUS, Hyewon Bang on 20221026
-    [Licensed under the MIT License]
     ===========================================================================*/
 
 #ifndef PROJECT_PIXEL_CLOUD_FUSION_H

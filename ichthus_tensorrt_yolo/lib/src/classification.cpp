@@ -2,7 +2,7 @@
 namespace yolo
 {
 Classification::Classification(const Config& config) : Model(config) {
-    labels_file = config.labels_file;//config["labels_file"].as<std::string>();
+    labels_file = config.labels_file;// Modified by Heywon on 2022/10/26
     class_labels = ReadImageNetLabel(labels_file);
     CATEGORY = class_labels.size();
 }
@@ -28,42 +28,7 @@ std::vector<ClassRes> Classification::InferenceImages(std::vector<cv::Mat> &vec_
     return results;
 }
 
-// void Classification::InferenceFolder(const std::string &folder_name) {
-//     std::vector<std::string> image_list = ReadFolder(folder_name);
-//     int index = 0;
-//     int batch_id = 0;
-//     std::vector<cv::Mat> vec_Mat(BATCH_SIZE);
-//     std::vector<std::string> vec_name(BATCH_SIZE);
-//     float total_time = 0;
-//     for (const std::string &image_name : image_list) {
-//         index++;
-//         std::cout << "Processing: " << image_name << std::endl;
-//         cv::Mat src_img = cv::imread(image_name);
-//         if (src_img.data) {
-//             if (channel_order == "BGR")
-//                 cv::cvtColor(src_img, src_img, cv::COLOR_BGR2RGB);
-//             vec_Mat[batch_id] = src_img.clone();
-//             vec_name[batch_id] = image_name;
-//             batch_id++;
-//         }
-//         if (batch_id == BATCH_SIZE) {
-//             auto start_time = std::chrono::high_resolution_clock::now();
-//             auto cls_results = InferenceImages(vec_Mat);
-//             auto end_time = std::chrono::high_resolution_clock::now();
-//             DrawResults(cls_results, vec_Mat, vec_name);
-//             vec_Mat = std::vector<cv::Mat>(BATCH_SIZE);
-//             batch_id = 0;
-//             total_time += std::chrono::duration<float, std::milli>(end_time - start_time).count();
-//         }
-//     }
-//     std::cout << "Average processing time is " << total_time / image_list.size() << "ms" << std::endl;
-// }
-
-// void Classification::InferenceFolder(std::vector<cv::Mat> &vec_img,std::vector<DetectRes> &detections){
-//     auto det_results = InferenceImages(vec_img);
-//     detections = det_results;
-// }
-
+// Modified by Heywon on 2022/10/26 : Delete InferenceFolder
 
 std::vector<ClassRes> Classification::PostProcess(const std::vector<cv::Mat> &vec_Mat, float *output) {
     std::vector<ClassRes> vec_result;

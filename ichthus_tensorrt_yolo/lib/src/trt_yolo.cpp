@@ -39,10 +39,7 @@ void Model::OnnxToTRTModel() {
     }
     // Build the engine
     builder->setMaxBatchSize(BATCH_SIZE);
-    // size_t workspace_size = (1ULL << 30);
-    //config->setMaxWorkspaceSize(workspace_size);
     config->setMaxWorkspaceSize(8_GiB); //8_GiB
-    // config->setFlag(nvinfer1::BuilderFlag::kFP16);
 
     std::cout << "start building engine" << std::endl;
     engine = builder->buildEngineWithConfig(*network, *config);

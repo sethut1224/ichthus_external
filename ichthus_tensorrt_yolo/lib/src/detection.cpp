@@ -24,67 +24,21 @@ Detection::Detection(const Config& config) : Model(config) {
 }
 
 std::vector<DetectRes> Detection::InferenceImages(std::vector<cv::Mat> &vec_img) {
-    // auto t_start_pre = std::chrono::high_resolution_clock::now();
     std::vector<float> image_data = PreProcess(vec_img);
-    // auto t_end_pre = std::chrono::high_resolution_clock::now();
-    // float total_pre = std::chrono::duration<float, std::milli>(t_end_pre - t_start_pre).count();
-    // std::cout << "detection prepare image take: " << total_pre << " ms." << std::endl;
     auto *output = new float[outSize * BATCH_SIZE];;
-    // auto t_start = std::chrono::high_resolution_clock::now();
     ModelInference(image_data, output);
-    // auto t_end = std::chrono::high_resolution_clock::now();
-    // float total_inf = std::chrono::duration<float, std::milli>(t_end - t_start).count();
-    // std::cout << "detection inference take: " << total_inf << " ms." << std::endl;
-    // auto r_start = std::chrono::high_resolution_clock::now();
     auto boxes = PostProcess(vec_img, output);
-    // auto r_end = std::chrono::high_resolution_clock::now();
-    // float total_res = std::chrono::duration<float, std::milli>(r_end - r_start).count();
-    // std::cout << "detection postprocess take: " << total_res << " ms." << std::endl;
     delete[] output;
-    // std::cout << "boxes " << boxes[0].det_results[0].x<<std::endl; // debug
     return boxes;
 }
 
-// void Detection::InferenceFolder(const std::string &folder_name) {
-//     std::vector<std::string> image_list = ReadFolder(folder_name);
-//     int index = 0;
-//     int batch_id = 0;
-//     std::vector<cv::Mat> vec_Mat(BATCH_SIZE);
-//     std::vector<std::string> vec_name(BATCH_SIZE);
-//     float total_time = 0;
-//     for (const std::string &image_name : image_list) {
-//         index++;
-//         std::cout << "Processing: " << image_name << std::endl;
-//         cv::Mat src_img = cv::imread(image_name);
-//         if (src_img.data) {
-//             if (channel_order == "BGR")
-//                 cv::cvtColor(src_img, src_img, cv::COLOR_BGR2RGB);
-//             // cv::resize(src_img, src_img, cv::Size(640, 640));
-//             vec_Mat[batch_id] = src_img.clone();
-//             vec_name[batch_id] = image_name;
-//             batch_id++;
-//         }
-//         if (batch_id == BATCH_SIZE) {
-//             auto start_time = std::chrono::high_resolution_clock::now();
-//             auto det_results = InferenceImages(vec_Mat);
-//             auto end_time = std::chrono::high_resolution_clock::now();
-//             DrawResults(det_results, vec_Mat, vec_name);
-//             vec_Mat = std::vector<cv::Mat>(BATCH_SIZE);
-//             batch_id = 0;
-//             total_time += std::chrono::duration<float, std::milli>(end_time - start_time).count();
-//         }
-//     }
-//     std::cout << "Average processing time is " << total_time / image_list.size() << "ms" << std::endl;
-// }
-
+// Modified by Heywon on 2022/10/26
 void Detection::InferenceFolder(std::vector<cv::Mat> &vec_img,std::vector<DetectRes> &detections){
     auto det_results = InferenceImages(vec_img);
-    // std::cout << "complete_det_results" <<std::endl;
     detections = det_results;
 }
 
 void Detection::NmsDetect(std::vector<Bbox> &detections) {
-    // std:: cout << "nms_threshold : " << nms_threshold << std::endl;
     sort(detections.begin(), detections.end(), [=](const Bbox &left, const Bbox &right) {
         return left.prob > right.prob;
     });
@@ -129,8 +83,6 @@ float Detection::IOUCalculate(const Bbox &det_a, const Bbox &det_b) {
 
 void Detection::DrawResults(const std::vector<DetectRes> &detections, std::vector<cv::Mat> &vec_img,
                             std::vector<std::string> image_name=std::vector<std::string>()) {
-    // std::cout << 'img_width : ' << vec_img.size() << std::endl;
-    // std::cout << 'img_height : ' << vec_img.size() << std::endl;
     for (int i = 0; i < (int)vec_img.size(); i++) {
         auto org_img = vec_img[i];
         if (!org_img.data)
@@ -140,16 +92,11 @@ void Detection::DrawResults(const std::vector<DetectRes> &detections, std::vecto
             cv::cvtColor(org_img, org_img, cv::COLOR_BGR2RGB);
         
         for(const auto &rect : rects) {
-            // std::cout << "rects.x : " << rect.x << std::endl;
-            // std::cout << "rects.y : " << rect.y << std::endl;
-            // std::cout << "rects.w : " << rect.w << std::endl;
-            // std::cout << "rects.h : " << rect.h << std::endl;
             char t[256];
             sprintf(t, "%.2f", rect.prob);
             std::string name = class_labels[rect.classes] + "-" + t;
             cv::putText(org_img, name, cv::Point(rect.x - rect.w / 2, rect.y - rect.h / 2 - 5),
                     cv::FONT_HERSHEY_COMPLEX, 0.7, class_colors[rect.classes], 2);
-            // cv::Rect rst(rect.x - rect.w / 2, rect.y - rect.h / 2, rect.w, rect.h);
             cv::Rect rst(rect.x - rect.w / 2, rect.y - rect.h / 2, rect.w, rect.h);
             cv::rectangle(org_img, rst, class_colors[rect.classes], 2, cv::LINE_8, 0);
         }
