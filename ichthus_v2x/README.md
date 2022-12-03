@@ -35,10 +35,14 @@ V2X ROS2 node of Soongsil University, Ichthus
   Information of PVD messages -  *DEBUG*
 
 ## Using ASN.1 Compiler to Use J2735
- 1. Download asn1c source code  
+#### (Before executing this code, it must be set as follows)
+ 1. Download SAE J2735 Message Set (J2735SET_201603)  
+ Download Link : https://www.sae.org/standards/content/j2735set_201603/
+ ![j2735capture](https://user-images.githubusercontent.com/31130917/205433456-d4489dde-ad85-4ac4-9964-341fb18b5e46.png)  
+ 2. Download asn1c source code  
  or bash command > git clone https://github.com/vlm/asn1c.git
  ![Download ASN 1](https://user-images.githubusercontent.com/31130917/174310844-a9cc2179-e125-4987-be76-0ef77ea3f434.png)  
- 2. Build asn1c source code and install  
+ 3. Build asn1c source code and install  
  * Build environment configuration  
    * apt-get update
    * apt-get install autoconf libtool gcc g++ make
@@ -49,14 +53,18 @@ V2X ROS2 node of Soongsil University, Ichthus
    * make install
    * asn1c -v  
 ![asn1c build](https://user-images.githubusercontent.com/31130917/174312820-2e08fbed-9de5-4a1a-9e4f-58cc92b611b6.png)  
- 3. Compile ASN.1  
+ 4. Compile ASN.1  
+ * Download sample code (https://drive.google.com/file/d/19lHeCxoZN_FQr5kVAmjLeGeprMEjeYDQ/view?usp=sharing)  
  * Copy ASN file within a asn folder
  * Execute compile commands within a j2735 folder
-   * cd j2735
+   * cd [sample code folder]/j2735
    * asn1c -f compound-names -pdu=all ../asn/[.ASN file]
    * make -f converter-example.mk
  * Check the creation of libasncodec.a within a j2735 folder  
 ![asn 1 compile](https://user-images.githubusercontent.com/31130917/174422636-c1b9bc90-a9aa-4896-9ec5-24baf529dd12.png)  
+5. If you use ASN.1 Compiler at ROS,  
+* Copy libasncodec.a to the src folder
+* Copy asn, asn1c-master, j2735 folder to the include folder  
 
 ## How to launch
 ```ros2 launch ichthus_v2x ichthus_v2x.launch.py```
